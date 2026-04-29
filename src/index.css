@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 228 15% 10%;
+    --foreground: 220 20% 92%;
+
+    --card: 228 15% 13%;
+    --card-foreground: 220 20% 92%;
+
+    --popover: 228 15% 13%;
+    --popover-foreground: 220 20% 92%;
+
+    --primary: 235 86% 65%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 228 15% 18%;
+    --secondary-foreground: 220 20% 85%;
+
+    --muted: 228 12% 20%;
+    --muted-foreground: 220 10% 55%;
+
+    --accent: 235 86% 65%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --border: 228 12% 22%;
+    --input: 228 12% 22%;
+    --ring: 235 86% 65%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 228 15% 8%;
+    --sidebar-foreground: 220 20% 85%;
+    --sidebar-primary: 235 86% 65%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 228 15% 15%;
+    --sidebar-accent-foreground: 220 20% 92%;
+    --sidebar-border: 228 12% 18%;
+    --sidebar-ring: 235 86% 65%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer utilities {
+  .glow-primary {
+    box-shadow: 0 0 20px hsl(235 86% 65% / 0.3);
+  }
+}

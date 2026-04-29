@@ -1,0 +1,2 @@
+Frontend starten mit npm run dev
+Backend starten mit npm run dev:api
