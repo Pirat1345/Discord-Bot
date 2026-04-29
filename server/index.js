@@ -17,11 +17,13 @@ const { soundboardRoutes } = require('./routes/soundboardRoutes');
 
 const app = express();
 
+const crypto = require('crypto');
+
 app.use(express.json({ limit: '6mb' }));
 app.use(
   session({
     name: 'botpanel.sid',
-    secret: process.env.SESSION_SECRET || 'dev-session-secret-change-me',
+    secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'),
     resave: false,
     saveUninitialized: false,
     cookie: {

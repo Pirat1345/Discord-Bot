@@ -5,7 +5,7 @@ const usersDir = path.join(dataDir, 'user');
 
 module.exports = {
   PORT: Number(process.env.API_PORT || 3001),
-  FRONTEND_ORIGIN: process.env.FRONTEND_ORIGIN || 'http://localhost:8080',
+  FRONTEND_ORIGIN: process.env.FRONTEND_ORIGIN || `http://localhost:${Number(process.env.API_PORT || 3001)}`,
   DISCORD_BOT_TOKEN: process.env.DISCORD_BOT_TOKEN || '',
   dataDir,
   usersDir,
