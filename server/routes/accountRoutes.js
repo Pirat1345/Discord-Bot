@@ -4,6 +4,8 @@ const crypto = require('crypto');
 const fs = require('fs');
 const fsp = require('fs/promises');
 const path = require('path');
+const { TOTP, Secret } = require('otpauth');
+const QRCode = require('qrcode');
 const { readDb, writeDb } = require('../services/dbService');
 const {
   sanitizeUser,
@@ -122,10 +124,6 @@ router.patch('/', requireAuth, requirePermission('write'), async (req, res) => {
 
   if (avatarDataUrl !== undefined) {
     const normalizedAvatar = String(avatarDataUrl || '').trim();
-
-    if (normalizedAvatar && normalizedAvatar.length > 1_500_000) {
-      return res.status(400).json({ error: 'Avatar ist zu groß. Bitte nutze ein Bild unter 1 MB.' });
-    }
 
     if (normalizedAvatar) {
       const avatarFile = await writeAvatarFile(user.id, normalizedAvatar);
@@ -300,6 +298,74 @@ router.delete('/self', requireAuth, async (req, res) => {
     res.clearCookie('discord_bot_sid');
     return res.status(204).send();
   });
+});
+
+// ── 2FA / TOTP ───────────────────────────────────────────────
+
+router.post('/2fa/setup', requireAuth, requirePermission('write'), async (req, res) => {
+  const db = await readDb();
+  const user = findUserById(db, req.session.userId);
+  if (!user) return res.status(401).json({ error: 'Nicht eingeloggt.' });
+
+  if (user.totp_enabled) {
+    return res.status(400).json({ error: '2FA ist bereits aktiviert.' });
+  }
+
+  const secret = new Secret();
+  user.totp_secret_pending = secret.base32;
+  await writeDb(db);
+
+  const totp = new TOTP({ issuer: 'BotPanel', label: user.username, secret });
+  const otpauthUrl = totp.toString();
+  const qrDataUrl = await QRCode.toDataURL(otpauthUrl);
+
+  return res.json({ qr: qrDataUrl, secret: secret.base32 });
+});
+
+router.post('/2fa/verify', requireAuth, requirePermission('write'), async (req, res) => {
+  const { code } = req.body || {};
+  if (!code) return res.status(400).json({ error: 'Code erforderlich.' });
+
+  const db = await readDb();
+  const user = findUserById(db, req.session.userId);
+  if (!user) return res.status(401).json({ error: 'Nicht eingeloggt.' });
+
+  if (!user.totp_secret_pending) {
+    return res.status(400).json({ error: 'Bitte zuerst 2FA einrichten.' });
+  }
+
+  const totp = new TOTP({ issuer: 'BotPanel', label: user.username, secret: Secret.fromBase32(user.totp_secret_pending) });
+  const valid = totp.validate({ token: String(code).trim(), window: 1 }) !== null;
+
+  if (!valid) {
+    return res.status(400).json({ error: 'Ungültiger Code. Bitte erneut versuchen.' });
+  }
+
+  user.totp_secret = user.totp_secret_pending;
+  user.totp_enabled = true;
+  delete user.totp_secret_pending;
+  await writeDb(db);
+
+  return res.json({ user: sanitizeUser(user) });
+});
+
+router.post('/2fa/disable', requireAuth, requirePermission('write'), async (req, res) => {
+  const { password } = req.body || {};
+  if (!password) return res.status(400).json({ error: 'Passwort erforderlich.' });
+
+  const db = await readDb();
+  const user = findUserById(db, req.session.userId);
+  if (!user) return res.status(401).json({ error: 'Nicht eingeloggt.' });
+
+  const validPassword = await bcrypt.compare(String(password), user.password_hash);
+  if (!validPassword) return res.status(401).json({ error: 'Passwort ist falsch.' });
+
+  user.totp_secret = null;
+  user.totp_secret_pending = null;
+  user.totp_enabled = false;
+  await writeDb(db);
+
+  return res.json({ user: sanitizeUser(user) });
 });
 
 module.exports = {

@@ -8,6 +8,7 @@ function sanitizeUser(user) {
       : user.avatar_url || null,
     role: user.role,
     must_change_password: Boolean(user.must_change_password),
+    totp_enabled: Boolean(user.totp_enabled),
     created_at: user.created_at,
   };
 }

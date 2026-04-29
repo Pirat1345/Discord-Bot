@@ -13,6 +13,7 @@ export interface LocalUser {
   avatar_url: string | null;
   role: string;
   must_change_password: boolean;
+  totp_enabled: boolean;
   created_at: string;
 }
 

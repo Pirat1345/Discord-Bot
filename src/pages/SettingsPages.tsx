@@ -174,6 +174,14 @@ export function SettingsProfile() {
   const [savingPassword, setSavingPassword] = useState(false);
   const [deletingSelf, setDeletingSelf] = useState(false);
   const [search, setSearch] = useState('');
+  const [twoFaSetupOpen, setTwoFaSetupOpen] = useState(false);
+  const [twoFaQr, setTwoFaQr] = useState('');
+  const [twoFaSecretText, setTwoFaSecretText] = useState('');
+  const [twoFaCode, setTwoFaCode] = useState('');
+  const [twoFaLoading, setTwoFaLoading] = useState(false);
+  const [disableTwoFaOpen, setDisableTwoFaOpen] = useState(false);
+  const [disableTwoFaPassword, setDisableTwoFaPassword] = useState('');
+  const [disableTwoFaLoading, setDisableTwoFaLoading] = useState(false);
   const normalizedSearch = search.trim().toLowerCase();
 
   useEffect(() => {
@@ -192,11 +200,6 @@ export function SettingsProfile() {
 
     if (!file.type.startsWith('image/')) {
       toast({ title: 'Fehler', description: 'Bitte nur Bilddateien hochladen.', variant: 'destructive' });
-      return;
-    }
-
-    if (file.size > 1_000_000) {
-      toast({ title: 'Fehler', description: 'Avatar ist zu groß. Bitte nutze ein Bild unter 1 MB.', variant: 'destructive' });
       return;
     }
 
@@ -323,6 +326,65 @@ export function SettingsProfile() {
     }
   };
 
+  const handleSetup2fa = async () => {
+    setTwoFaLoading(true);
+    try {
+      const data = await apiFetch<{ qr: string; secret: string }>('/account/2fa/setup', { method: 'POST' });
+      setTwoFaQr(data.qr);
+      setTwoFaSecretText(data.secret);
+      setTwoFaCode('');
+      setTwoFaSetupOpen(true);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      toast({ title: 'Fehler', description: msg, variant: 'destructive' });
+    } finally {
+      setTwoFaLoading(false);
+    }
+  };
+
+  const handleVerify2fa = async () => {
+    if (!twoFaCode.trim()) return;
+    setTwoFaLoading(true);
+    try {
+      const data = await apiFetch<{ user: LocalUser }>('/account/2fa/verify', {
+        method: 'POST',
+        body: JSON.stringify({ code: twoFaCode.trim() }),
+      });
+      setTwoFaSetupOpen(false);
+      setTwoFaQr('');
+      setTwoFaSecretText('');
+      setTwoFaCode('');
+      toast({ title: '2FA aktiviert', description: 'Zwei-Faktor-Authentifizierung wurde erfolgreich eingerichtet.' });
+      // Refresh user state
+      window.location.reload();
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      toast({ title: 'Fehler', description: msg, variant: 'destructive' });
+    } finally {
+      setTwoFaLoading(false);
+    }
+  };
+
+  const handleDisable2fa = async () => {
+    if (!disableTwoFaPassword.trim()) return;
+    setDisableTwoFaLoading(true);
+    try {
+      await apiFetch<{ user: LocalUser }>('/account/2fa/disable', {
+        method: 'POST',
+        body: JSON.stringify({ password: disableTwoFaPassword }),
+      });
+      setDisableTwoFaOpen(false);
+      setDisableTwoFaPassword('');
+      toast({ title: '2FA deaktiviert', description: 'Zwei-Faktor-Authentifizierung wurde deaktiviert.' });
+      window.location.reload();
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      toast({ title: 'Fehler', description: msg, variant: 'destructive' });
+    } finally {
+      setDisableTwoFaLoading(false);
+    }
+  };
+
   return (
     <PageShell
       title="Mein Profil"
@@ -371,7 +433,7 @@ export function SettingsProfile() {
                 onChange={(e) => handleAvatarFileChange(e.target.files?.[0] || null)}
                 className="bg-secondary border-border text-foreground"
               />
-              <p className="text-xs text-muted-foreground">PNG, JPG, WEBP oder GIF. Maximal 1 MB.</p>
+              <p className="text-xs text-muted-foreground">PNG, JPG, WEBP oder GIF.</p>
               <Button type="button" variant="secondary" onClick={handleRemoveAvatar} disabled={savingUsername || (!avatarPreview && !user?.avatar_url)}>
                 <Trash2 className="h-4 w-4" />
                 Profilbild entfernen
@@ -426,6 +488,107 @@ export function SettingsProfile() {
             <Button onClick={handleChangePassword} disabled={savingPassword}>
               {savingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Speichern
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 2FA Section */}
+      <Card className="border-border bg-card">
+        <CardHeader>
+          <CardTitle className="text-foreground">Zwei-Faktor-Authentifizierung (2FA)</CardTitle>
+          <CardDescription className="text-muted-foreground">
+            Schütze deinen Account mit einem zusätzlichen Code aus einer Authenticator-App (z.B. Google Authenticator).
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {user?.totp_enabled ? (
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500/10">
+                <KeyRound className="h-5 w-5 text-green-500" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">2FA ist aktiviert</p>
+                <p className="text-xs text-muted-foreground">Dein Account ist mit einer Authenticator-App geschützt.</p>
+              </div>
+              <Button variant="destructive" onClick={() => { setDisableTwoFaPassword(''); setDisableTwoFaOpen(true); }}>
+                2FA deaktivieren
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                <KeyRound className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">2FA ist nicht aktiviert</p>
+                <p className="text-xs text-muted-foreground">Aktiviere 2FA für zusätzliche Sicherheit beim Login.</p>
+              </div>
+              <Button onClick={handleSetup2fa} disabled={twoFaLoading}>
+                {twoFaLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                2FA einrichten
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 2FA Setup Dialog */}
+      <Dialog open={twoFaSetupOpen} onOpenChange={setTwoFaSetupOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>2FA einrichten</DialogTitle>
+            <DialogDescription>
+              Scanne den QR-Code mit deiner Authenticator-App und gib den 6-stelligen Code ein um 2FA zu aktivieren.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {twoFaQr && (
+              <div className="flex justify-center">
+                <img src={twoFaQr} alt="2FA QR Code" className="h-48 w-48 rounded-lg border border-border" />
+              </div>
+            )}
+            {twoFaSecretText && (
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Oder manuell eingeben:</Label>
+                <Input value={twoFaSecretText} readOnly className="bg-secondary border-border font-mono text-xs text-foreground" onClick={(e) => (e.target as HTMLInputElement).select()} />
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label>6-stelliger Code</Label>
+              <Input
+                value={twoFaCode}
+                onChange={(e) => setTwoFaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="000000"
+                maxLength={6}
+                className="bg-secondary border-border text-center text-lg font-mono tracking-widest text-foreground"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleVerify2fa} disabled={twoFaLoading || twoFaCode.length !== 6}>
+              {twoFaLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Aktivieren
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 2FA Disable Dialog */}
+      <Dialog open={disableTwoFaOpen} onOpenChange={setDisableTwoFaOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>2FA deaktivieren</DialogTitle>
+            <DialogDescription>Gib dein Passwort ein um die Zwei-Faktor-Authentifizierung zu deaktivieren.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>Passwort</Label>
+            <Input type="password" value={disableTwoFaPassword} onChange={(e) => setDisableTwoFaPassword(e.target.value)} />
+          </div>
+          <DialogFooter>
+            <Button variant="destructive" onClick={handleDisable2fa} disabled={disableTwoFaLoading || !disableTwoFaPassword.trim()}>
+              {disableTwoFaLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Deaktivieren
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -703,11 +866,6 @@ export function SettingsConfigurationGeneral() {
 
     if (!file.type.startsWith('image/')) {
       toast({ title: 'Fehler', description: 'Bitte nur Bilddateien hochladen.', variant: 'destructive' });
-      return;
-    }
-
-    if (file.size > 1_000_000) {
-      toast({ title: 'Fehler', description: 'App-Icon ist zu groß. Bitte nutze ein Bild unter 1 MB.', variant: 'destructive' });
       return;
     }
 
@@ -1005,11 +1163,6 @@ export function SettingsConfigurationDiscord() {
 
     if (!file.type.startsWith('image/')) {
       toast({ title: 'Fehler', description: 'Bitte nur Bilddateien hochladen.', variant: 'destructive' });
-      return;
-    }
-
-    if (file.size > 1_000_000) {
-      toast({ title: 'Fehler', description: 'Avatar ist zu groß. Bitte nutze ein Bild unter 1 MB.', variant: 'destructive' });
       return;
     }
 

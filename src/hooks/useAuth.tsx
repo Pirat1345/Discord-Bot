@@ -6,7 +6,7 @@ interface AuthContextType {
   user: LocalUser | null;
   loading: boolean;
   needsInitialSetup: boolean;
-  signIn: (username: string, password: string) => Promise<{ error: Error | null }>;
+  signIn: (username: string, password: string, totpCode?: string) => Promise<{ error: Error | null; requires2fa?: boolean }>;
   initializeAdmin: (username: string, password: string) => Promise<{ error: Error | null }>;
   completeInitialSetup: (username: string, newPassword: string) => Promise<{ error: Error | null }>;
   updateAccount: (updates: {
@@ -51,16 +51,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const signIn = async (username: string, password: string) => {
+  const signIn = async (username: string, password: string, totpCode?: string) => {
     try {
       const data = await apiFetch<{ user: LocalUser }>('/auth/signin', {
         method: 'POST',
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password, totpCode }),
       });
       setUser(data.user);
       return { error: null };
     } catch (error) {
-      return { error: error as Error };
+      const err = error as Error;
+      if (err.message === '2fa_required') {
+        return { error: null, requires2fa: true };
+      }
+      return { error: err };
     }
   };
 

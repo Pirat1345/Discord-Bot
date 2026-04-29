@@ -19,7 +19,7 @@ const app = express();
 
 const crypto = require('crypto');
 
-app.use(express.json({ limit: '6mb' }));
+app.use(express.json({ limit: '50mb' }));
 app.use(
   session({
     name: 'botpanel.sid',

@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const { TOTP, Secret } = require('otpauth');
 const { readDb, writeDb } = require('../services/dbService');
 const {
   sanitizeUser,
@@ -88,7 +89,7 @@ router.post('/initialize-admin', async (req, res) => {
 });
 
 router.post('/signin', async (req, res) => {
-  const { username, password } = req.body || {};
+  const { username, password, totpCode } = req.body || {};
   const normalizedUsername = String(username || '').trim().toLowerCase();
 
   if (!normalizedUsername || !password) {
@@ -105,6 +106,19 @@ router.post('/signin', async (req, res) => {
   const valid = await bcrypt.compare(String(password || ''), user.password_hash);
   if (!valid) {
     return res.status(401).json({ error: 'Ungueltige Login-Daten.' });
+  }
+
+  if (user.totp_enabled && user.totp_secret) {
+    if (!totpCode) {
+      return res.status(403).json({ error: '2fa_required', requires_2fa: true });
+    }
+
+    const totp = new TOTP({ issuer: 'BotPanel', label: user.username, secret: Secret.fromBase32(user.totp_secret) });
+    const validTotp = totp.validate({ token: String(totpCode).trim(), window: 1 }) !== null;
+
+    if (!validTotp) {
+      return res.status(401).json({ error: 'Ungültiger 2FA-Code.' });
+    }
   }
 
   return establishSession(req, res, user);
