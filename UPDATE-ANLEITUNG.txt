@@ -1,0 +1,55 @@
+====================================
+  Update-Anleitung für Discord-Bot
+====================================
+
+Wenn du Änderungen am Code gemacht hast (z.B. Icon, Features, Bugfixes),
+musst du diese auf GitHub pushen. Dann wird automatisch ein neues Docker
+Image gebaut, das du auf ZimaOS aktualisieren kannst.
+
+
+SCHRITT 1: Änderungen committen und pushen
+-------------------------------------------
+Öffne ein Terminal im Projektordner und führe aus:
+
+    git add -A
+    git commit -m "Beschreibung was du geändert hast"
+    git push
+
+
+SCHRITT 2: Warten bis das Image gebaut ist
+--------------------------------------------
+Gehe zu:  https://github.com/Pirat1345/Discord-Bot/actions
+
+Warte bis der Build grün ist (ca. 2-3 Minuten).
+
+
+SCHRITT 3: Auf ZimaOS aktualisieren
+--------------------------------------
+In der ZimaOS Web-UI:
+
+  1. Gehe zu Apps
+  2. Klicke auf den discord-bot Container
+  3. Lösche / Stoppe den Container
+  4. Installiere ihn neu mit der gleichen docker-compose:
+
+     services:
+       discord-bot:
+         image: ghcr.io/pirat1345/discord-bot:latest
+         container_name: discord-bot-panel
+         restart: unless-stopped
+         ports:
+           - "3001:3001"
+         volumes:
+           - /DATA/AppData/discord-bot:/app/server/data
+
+  Deine Daten (Accounts, Bot-Einstellungen etc.) bleiben erhalten,
+  weil sie im Volume /DATA/AppData/discord-bot gespeichert sind.
+
+
+ZUSAMMENFASSUNG (Kurzversion)
+-------------------------------
+  1. Code ändern
+  2. git add -A && git commit -m "Nachricht" && git push
+  3. Warten bis GitHub Actions grün ist
+  4. Auf ZimaOS Container neu deployen
+  5. Fertig!
