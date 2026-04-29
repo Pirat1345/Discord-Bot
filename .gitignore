@@ -19,6 +19,9 @@ dist-ssr
 server/data/user/
 server/data/db.json
 
+# Local notes
+UPDATE-ANLEITUNG.txt
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
