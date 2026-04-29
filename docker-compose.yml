@@ -1,13 +1,13 @@
 services:
   discord-bot:
-    build: .
+    image: ghcr.io/pirat1345/discord-bot:latest
     container_name: discord-bot-panel
     restart: unless-stopped
     ports:
       - "3001:3001"
     environment:
       - API_PORT=3001
-      - SESSION_SECRET=${SESSION_SECRET}
+      - SESSION_SECRET=${SESSION_SECRET:-bitte-aendern}
       - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN:-}
       - FRONTEND_ORIGIN=${FRONTEND_ORIGIN:-http://localhost:3001}
     volumes:
