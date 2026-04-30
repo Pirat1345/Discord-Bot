@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as botApi from '@/lib/botApi';
 import type { DmChannel, DmMessage, DmRecipient } from '@/lib/botApi';
 
-function formatTimestamp(iso: string) {
+function formatTimestamp(iso: string, t: (key: string, opts?: Record<string, unknown>) => string) {
   const date = new Date(iso);
   const now = new Date();
   const isToday = date.toDateString() === now.toDateString();
@@ -20,11 +21,11 @@ function formatTimestamp(iso: string) {
   yesterday.setDate(yesterday.getDate() - 1);
   const isYesterday = date.toDateString() === yesterday.toDateString();
 
-  const time = date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  const time = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
-  if (isToday) return `Heute um ${time}`;
-  if (isYesterday) return `Gestern um ${time}`;
-  return `${date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })} um ${time}`;
+  if (isToday) return t('discord.dmChat.today', { time });
+  if (isYesterday) return t('discord.dmChat.yesterday', { time });
+  return `${date.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' })} ${time}`;
 }
 
 function getInitials(name: string) {
@@ -37,7 +38,7 @@ function getInitials(name: string) {
     .toUpperCase();
 }
 
-function MessageBubble({ message, previousMessage }: { message: DmMessage; previousMessage?: DmMessage }) {
+function MessageBubble({ message, previousMessage, t }: { message: DmMessage; previousMessage?: DmMessage; t: (key: string, opts?: Record<string, unknown>) => string }) {
   const isOwn = message.is_own;
   const showAuthor =
     !previousMessage ||
@@ -65,7 +66,7 @@ function MessageBubble({ message, previousMessage }: { message: DmMessage; previ
                 </span>
               )}
             </span>
-            <span className="text-[11px] text-muted-foreground">{formatTimestamp(message.timestamp)}</span>
+            <span className="text-[11px] text-muted-foreground">{formatTimestamp(message.timestamp, t)}</span>
           </div>
         )}
         {message.content && (
@@ -108,7 +109,7 @@ function MessageBubble({ message, previousMessage }: { message: DmMessage; previ
           <p className="text-xs italic text-muted-foreground">[Embed]</p>
         )}
         {message.edited_timestamp && (
-          <span className="text-[10px] text-muted-foreground">(bearbeitet)</span>
+          <span className="text-[10px] text-muted-foreground">{t('discord.dmChat.edited')}</span>
         )}
       </div>
     </div>
@@ -116,6 +117,7 @@ function MessageBubble({ message, previousMessage }: { message: DmMessage; previ
 }
 
 export function DmChat({ activeBotProfileId }: { activeBotProfileId?: string | null }) {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const qc = useQueryClient();
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
@@ -213,8 +215,8 @@ export function DmChat({ activeBotProfileId }: { activeBotProfileId?: string | n
       setMessageText('');
       setShouldAutoScroll(true);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Nachricht konnte nicht gesendet werden.';
-      toast({ title: 'Fehler', description: msg, variant: 'destructive' });
+      const msg = err instanceof Error ? err.message : t('discord.dmChat.sendError');
+      toast({ title: t('common.error'), description: msg, variant: 'destructive' });
     }
   };
 
@@ -225,7 +227,7 @@ export function DmChat({ activeBotProfileId }: { activeBotProfileId?: string | n
       setCopiedId(true);
       setTimeout(() => setCopiedId(false), 2000);
     } catch {
-      toast({ title: 'Fehler', description: 'ID konnte nicht kopiert werden.', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('discord.dmChat.copyError'), variant: 'destructive' });
     }
   };
 
@@ -235,8 +237,8 @@ export function DmChat({ activeBotProfileId }: { activeBotProfileId?: string | n
     try {
       await openDm.mutateAsync(id);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'DM konnte nicht geöffnet werden.';
-      toast({ title: 'Fehler', description: msg, variant: 'destructive' });
+      const msg = err instanceof Error ? err.message : t('discord.dmChat.dmOpenError');
+      toast({ title: t('common.error'), description: msg, variant: 'destructive' });
     }
   };
 
@@ -268,7 +270,7 @@ export function DmChat({ activeBotProfileId }: { activeBotProfileId?: string | n
             <Input
               value={contactSearch}
               onChange={(e) => setContactSearch(e.target.value)}
-              placeholder="Suchen oder User-ID..."
+              placeholder={t('discord.dmChat.searchPlaceholder')}
               className="bg-secondary border-border pl-9 text-foreground text-sm h-9"
             />
           </div>
@@ -276,7 +278,7 @@ export function DmChat({ activeBotProfileId }: { activeBotProfileId?: string | n
             <Input
               value={newDmUserId}
               onChange={(e) => setNewDmUserId(e.target.value)}
-              placeholder="User-ID eingeben..."
+              placeholder={t('discord.dmChat.userIdPlaceholder')}
               className="bg-secondary border-border text-foreground text-sm h-9 flex-1"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleOpenNewDm();
@@ -301,10 +303,10 @@ export function DmChat({ activeBotProfileId }: { activeBotProfileId?: string | n
             <div className="px-4 py-8 text-center">
               <MessageCircle className="mx-auto h-8 w-8 text-muted-foreground/40" />
               <p className="mt-2 text-sm text-muted-foreground">
-                {contactSearch ? 'Keine Ergebnisse' : 'Noch keine DMs'}
+                {contactSearch ? t('discord.dmChat.noResults') : t('discord.dmChat.noDms')}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Gib eine User-ID ein, um eine Unterhaltung zu starten.
+                {t('discord.dmChat.noDmsHint')}
               </p>
             </div>
           ) : (
@@ -337,7 +339,7 @@ export function DmChat({ activeBotProfileId }: { activeBotProfileId?: string | n
                     <button
                       type="button"
                       className="shrink-0 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/20 hover:text-destructive group-hover/item:opacity-100"
-                      title="Unterhaltung entfernen"
+                      title={t('discord.dmChat.removeConversation')}
                       onClick={(e) => {
                         e.stopPropagation();
                         deleteDm.mutate(channel.id);
@@ -359,9 +361,9 @@ export function DmChat({ activeBotProfileId }: { activeBotProfileId?: string | n
           <div className="flex flex-1 items-center justify-center">
             <div className="text-center">
               <MessageCircle className="mx-auto h-12 w-12 text-muted-foreground/30" />
-              <p className="mt-3 text-sm font-medium text-foreground">Wähle eine Unterhaltung</p>
+              <p className="mt-3 text-sm font-medium text-foreground">{t('discord.dmChat.selectConversation')}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Wähle links einen Kontakt aus oder starte eine neue Unterhaltung.
+                {t('discord.dmChat.selectConversationHint')}
               </p>
             </div>
           </div>
@@ -401,7 +403,7 @@ export function DmChat({ activeBotProfileId }: { activeBotProfileId?: string | n
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        title="User-ID kopieren"
+                        title={t('discord.dmChat.copyUserId')}
                         onClick={handleCopyUserId}
                       >
                         {copiedId ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
@@ -426,7 +428,7 @@ export function DmChat({ activeBotProfileId }: { activeBotProfileId?: string | n
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2">
                       <Repeat className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">Anzahl</span>
+                      <span className="text-xs text-muted-foreground">{t('discord.dmChat.repeatCount')}</span>
                     </div>
                     <Input
                       type="number"
@@ -444,7 +446,7 @@ export function DmChat({ activeBotProfileId }: { activeBotProfileId?: string | n
                       onClick={() => handleSendMessage({ rateLimit: true })}
                     >
                       {sendDm.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
-                      Rate-Limit senden
+                      {t('discord.dmChat.rateLimitSend')}
                     </Button>
                   </div>
                   <div className="flex items-center gap-2">
@@ -454,12 +456,12 @@ export function DmChat({ activeBotProfileId }: { activeBotProfileId?: string | n
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6"
-                      title="Channel-ID kopieren"
+                      title={t('discord.dmChat.copyChannelId')}
                       onClick={async () => {
                         if (!selectedChannelId) return;
                         try {
                           await navigator.clipboard.writeText(selectedChannelId);
-                          toast({ title: 'Channel-ID kopiert' });
+                          toast({ title: t('discord.dmChat.channelIdCopied') });
                         } catch {
                           // ignore
                         }
@@ -486,9 +488,9 @@ export function DmChat({ activeBotProfileId }: { activeBotProfileId?: string | n
                 <div className="flex items-center justify-center py-12 text-center">
                   <div>
                     <MessageCircle className="mx-auto h-8 w-8 text-muted-foreground/30" />
-                    <p className="mt-2 text-sm text-muted-foreground">Noch keine Nachrichten</p>
+                    <p className="mt-2 text-sm text-muted-foreground">{t('discord.dmChat.noMessages')}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Sende die erste Nachricht, um die Unterhaltung zu beginnen.
+                      {t('discord.dmChat.noMessagesHint')}
                     </p>
                   </div>
                 </div>
@@ -499,6 +501,7 @@ export function DmChat({ activeBotProfileId }: { activeBotProfileId?: string | n
                       key={msg.id}
                       message={msg}
                       previousMessage={i > 0 ? sortedMessages[i - 1] : undefined}
+                      t={t}
                     />
                   ))}
                   <div ref={messagesEndRef} />
@@ -512,7 +515,7 @@ export function DmChat({ activeBotProfileId }: { activeBotProfileId?: string | n
                 <Input
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
-                  placeholder={selectedRecipient ? `Nachricht an @${selectedRecipient.display_name}` : 'Nachricht schreiben...'}
+                  placeholder={selectedRecipient ? t('discord.dmChat.messageTo', { name: selectedRecipient.display_name }) : t('discord.dmChat.messagePlaceholder')}
                   className="bg-secondary border-border text-foreground placeholder:text-muted-foreground"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {

@@ -17,14 +17,14 @@ const router = express.Router();
 function establishSession(req, res, user, statusCode = 200) {
   return req.session.regenerate((regenerateError) => {
     if (regenerateError) {
-      return res.status(500).json({ error: 'Session konnte nicht erstellt werden.' });
+      return res.status(500).json({ error: 'Session could not be created.' });
     }
 
     req.session.userId = user.id;
 
     return req.session.save((saveError) => {
       if (saveError) {
-        return res.status(500).json({ error: 'Session konnte nicht gespeichert werden.' });
+        return res.status(500).json({ error: 'Session could not be saved.' });
       }
 
       return res.status(statusCode).json({ user: sanitizeUser(user) });
@@ -55,7 +55,7 @@ router.post('/initialize-admin', async (req, res) => {
   if (!normalizedUsername || String(password || '').length < 5) {
     return res
       .status(400)
-      .json({ error: 'Benutzername und Passwort (mind. 5 Zeichen) sind erforderlich.' });
+      .json({ error: 'Username and password (min. 5 characters) are required.' });
   }
 
   const db = await readDb();
@@ -63,7 +63,7 @@ router.post('/initialize-admin', async (req, res) => {
   if (db.users.length > 0) {
     return res
       .status(409)
-      .json({ error: 'Erstkonfiguration wurde bereits abgeschlossen.' });
+      .json({ error: 'Initial setup has already been completed.' });
   }
 
   const user = {
@@ -93,19 +93,19 @@ router.post('/signin', async (req, res) => {
   const normalizedUsername = String(username || '').trim().toLowerCase();
 
   if (!normalizedUsername || !password) {
-    return res.status(400).json({ error: 'Bitte Benutzername und Passwort eingeben.' });
+    return res.status(400).json({ error: 'Please enter username and password.' });
   }
 
   const db = await readDb();
   const user = findUserByUsername(db, normalizedUsername);
 
   if (!user) {
-    return res.status(401).json({ error: 'Ungueltige Login-Daten.' });
+    return res.status(401).json({ error: 'Invalid login credentials.' });
   }
 
   const valid = await bcrypt.compare(String(password || ''), user.password_hash);
   if (!valid) {
-    return res.status(401).json({ error: 'Ungueltige Login-Daten.' });
+    return res.status(401).json({ error: 'Invalid login credentials.' });
   }
 
   if (user.totp_enabled && user.totp_secret) {
@@ -117,7 +117,7 @@ router.post('/signin', async (req, res) => {
     const validTotp = totp.validate({ token: String(totpCode).trim(), window: 1 }) !== null;
 
     if (!validTotp) {
-      return res.status(401).json({ error: 'Ungültiger 2FA-Code.' });
+      return res.status(401).json({ error: 'Invalid 2FA code.' });
     }
   }
 
@@ -131,18 +131,18 @@ router.post('/complete-initial-setup', requireAuth, async (req, res) => {
   if (!normalizedUsername || String(newPassword || '').length < 5) {
     return res
       .status(400)
-      .json({ error: 'Benutzername und neues Passwort (mind. 5 Zeichen) sind erforderlich.' });
+      .json({ error: 'Username and new password (min. 5 characters) are required.' });
   }
 
   const db = await readDb();
   const user = findUserById(db, req.session.userId);
 
   if (!user) {
-    return res.status(401).json({ error: 'Nicht eingeloggt.' });
+    return res.status(401).json({ error: 'Not logged in.' });
   }
 
   if (isUsernameInUse(db, normalizedUsername, user.id)) {
-    return res.status(409).json({ error: 'Dieser Benutzername ist bereits vergeben.' });
+    return res.status(409).json({ error: 'This username is already taken.' });
   }
 
   user.username = normalizedUsername;

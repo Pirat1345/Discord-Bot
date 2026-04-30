@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Power, Bot, Loader2, Plus, Settings2, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 interface BotProfile {
   id: string;
@@ -40,26 +41,27 @@ export function BotSection({
   handleDeleteBot,
 }: BotSectionProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <Card className="bg-card border-border">
       <CardHeader>
         <div className="flex items-center justify-between gap-4">
-          <CardTitle className="text-foreground">Bot Verwaltung</CardTitle>
+          <CardTitle className="text-foreground">{t('botControl.bot.title')}</CardTitle>
           <Button type="button" size="sm" onClick={handleAddBot} disabled={updateSettingsPending} className="gap-2 shrink-0">
             <Plus className="h-4 w-4" />
-            Bot hinzufügen
+            {t('botControl.bot.addBot')}
           </Button>
         </div>
         <CardDescription className="text-muted-foreground">
-          Jeder Bot hat eine eigene Karte. Einstellungen bearbeitest du per Zahnrad in den Bot-Einstellungen.
+          {t('botControl.bot.description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {botProfileLoading ? (
           <div className="flex items-center gap-2 text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Lade Bot-Daten...
+            {t('botControl.bot.loading')}
           </div>
         ) : (
           profiles.map((profile) => {
@@ -78,14 +80,14 @@ export function BotSection({
                   )}
                   <div>
                     <p className="font-semibold text-foreground">{profile.name}</p>
-                    <p className="text-xs text-muted-foreground">{isProfileOnline ? 'Aktiv und online' : 'Nicht aktiv'}</p>
+                    <p className="text-xs text-muted-foreground">{isProfileOnline ? t('botControl.bot.activeOnline') : t('botControl.bot.inactive')}</p>
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-sm font-medium text-foreground">Server</p>
+                  <p className="text-sm font-medium text-foreground">{t('botControl.bot.serverLabel')}</p>
                   <p className="text-xs text-muted-foreground">
-                    {isProfileOnline ? serverSummary : 'Wird angezeigt, sobald dieser Bot aktiv ist.'}
+                    {isProfileOnline ? serverSummary : t('botControl.bot.serverHint')}
                   </p>
                 </div>
 
@@ -103,7 +105,7 @@ export function BotSection({
                     onClick={() => handleToggleProfile(profile.id, !isProfileOnline)}
                   >
                     <Power className="h-4 w-4" />
-                    {isProfileOnline ? 'Online' : 'Offline'}
+                    {isProfileOnline ? t('botControl.bot.online') : t('botControl.bot.offline')}
                   </Button>
                   <Button
                     type="button"

@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { getGameDeals, refreshGameDeals } from '@/lib/botApi';
 import type { GameDeal } from '@/lib/botApi';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,7 @@ function formatEndDate(iso: string | null): string | null {
   if (!iso) return null;
   try {
     const d = new Date(iso);
-    return d.toLocaleString('de-DE', {
+    return d.toLocaleString(undefined, {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -23,26 +24,26 @@ function formatEndDate(iso: string | null): string | null {
   }
 }
 
-function formatTimeRemaining(iso: string | null): string | null {
+function formatTimeRemaining(iso: string | null, t: (key: string, opts?: Record<string, unknown>) => string): string | null {
   if (!iso) return null;
   try {
     const end = new Date(iso);
     const now = new Date();
     const diffMs = end.getTime() - now.getTime();
-    if (diffMs <= 0) return 'Abgelaufen';
+    if (diffMs <= 0) return t('games.expired');
     const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    if (days > 0) return `Noch ${days}d ${hours}h`;
+    if (days > 0) return t('games.remainingDays', { days, hours });
     const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    return `Noch ${hours}h ${minutes}min`;
+    return t('games.remainingHours', { hours, minutes });
   } catch {
     return null;
   }
 }
 
-function DealCard({ deal }: { deal: GameDeal }) {
+function DealCard({ deal, t }: { deal: GameDeal; t: (key: string, opts?: Record<string, unknown>) => string }) {
   const endDate = formatEndDate(deal.endDate);
-  const remaining = formatTimeRemaining(deal.endDate);
+  const remaining = formatTimeRemaining(deal.endDate, t);
   const isEpic = deal.platform === 'epic';
 
   return (
@@ -77,7 +78,7 @@ function DealCard({ deal }: { deal: GameDeal }) {
         </Badge>
 
         <Badge className="absolute right-3 top-3 bg-green-600 text-white hover:bg-green-600">
-          KOSTENLOS
+          {t('games.free')}
         </Badge>
 
         <ExternalLink
@@ -96,7 +97,7 @@ function DealCard({ deal }: { deal: GameDeal }) {
             {deal.originalPrice ? (
               <span className="text-sm text-muted-foreground line-through">{deal.originalPrice}</span>
             ) : null}
-            <span className="text-lg font-bold text-green-500">0,00 €</span>
+            <span className="text-lg font-bold text-green-500">{t('games.freePrice')}</span>
           </div>
 
           {(endDate || remaining) && (
@@ -124,12 +125,14 @@ function DealSection({
   deals,
   loading,
   error,
+  t,
 }: {
   title: string;
   platform: 'epic' | 'steam';
   deals: GameDeal[];
   loading: boolean;
   error?: string;
+  t: (key: string, opts?: Record<string, unknown>) => string;
 }) {
   return (
     <section className="space-y-4">
@@ -162,13 +165,13 @@ function DealSection({
         </div>
       ) : deals.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border bg-card/50 px-6 py-16 text-center">
-          <p className="text-sm text-muted-foreground">Keine Deals gefunden</p>
-          <p className="mt-2 text-xs text-muted-foreground">Schau später nochmal vorbei oder klicke auf „Jetzt scannen".</p>
+          <p className="text-sm text-muted-foreground">{t('games.noDeals')}</p>
+          <p className="mt-2 text-xs text-muted-foreground">{t('games.noDealsHint')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {deals.map((deal) => (
-            <DealCard key={`${platform}-${deal.id}`} deal={deal} />
+            <DealCard key={`${platform}-${deal.id}`} deal={deal} t={t} />
           ))}
         </div>
       )}
@@ -177,6 +180,7 @@ function DealSection({
 }
 
 export default function Games() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const qc = useQueryClient();
 
@@ -190,10 +194,10 @@ export default function Games() {
     mutationFn: refreshGameDeals,
     onSuccess: (data) => {
       qc.setQueryData(['game-deals'], data);
-      toast({ title: 'Deals aktualisiert', description: `${(data.epic?.length || 0) + (data.steam?.length || 0)} Deals gefunden.` });
+      toast({ title: t('games.dealsUpdated'), description: t('games.dealsFound', { count: (data.epic?.length || 0) + (data.steam?.length || 0) }) });
     },
     onError: (err) => {
-      toast({ title: 'Fehler', description: err instanceof Error ? err.message : 'Unbekannter Fehler', variant: 'destructive' });
+      toast({ title: t('common.error'), description: err instanceof Error ? err.message : 'Unknown error', variant: 'destructive' });
     },
   });
 
@@ -209,15 +213,15 @@ export default function Games() {
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-primary">
             <Gamepad2 className={cn('h-4 w-4', loading && 'animate-spin')} aria-hidden />
-            <span>Game Deals Scanner</span>
+            <span>{t('games.scanner')}</span>
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Kostenlose Spiele</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t('games.title')}</h1>
           <p className="max-w-md text-sm text-muted-foreground">
-            Live-Tracker für kostenlose Spiele auf Epic Games und Steam. Auto-Refresh alle 30 Minuten.
+            {t('games.description')}
           </p>
           {lastUpdated && (
             <p className="text-xs text-muted-foreground">
-              Zuletzt aktualisiert: {lastUpdated.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+              {t('games.lastUpdated')} {lastUpdated.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
             </p>
           )}
         </div>
@@ -228,25 +232,27 @@ export default function Games() {
           className="gap-2 self-start"
         >
           <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} aria-hidden />
-          {loading ? 'Scanne...' : 'Jetzt scannen'}
+          {loading ? t('games.scanning') : t('games.scanNow')}
         </Button>
       </div>
 
       {/* Deal Sections */}
       <div className="space-y-12">
         <DealSection
-          title="Epic – Kostenlos"
+          title={t('games.epicTitle')}
           platform="epic"
           deals={epic}
           loading={loading}
           error={dealsData?.errors?.epic}
+          t={t}
         />
         <DealSection
-          title="Steam – 100% Rabatt"
+          title={t('games.steamTitle')}
           platform="steam"
           deals={steam}
           loading={loading}
           error={dealsData?.errors?.steam}
+          t={t}
         />
       </div>
     </div>

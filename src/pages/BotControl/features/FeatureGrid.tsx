@@ -3,6 +3,7 @@ import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Terminal, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 import type { BotFeature, Json } from '@/types/api';
 import { featureIcons } from '../types';
 
@@ -49,6 +50,7 @@ export function FeatureGrid({
   scopedFeatureKey,
   setLocalConfigs,
 }: FeatureGridProps) {
+  const { t } = useTranslation();
   const renderFeatureContent = (feature: BotFeature, config: Record<string, string>) => {
     const commonProps = {
       config,
@@ -89,7 +91,7 @@ export function FeatureGrid({
   };
 
   if (!categorizedFeatures.length) {
-    return <p className="text-sm text-muted-foreground">Keine Tools für die Suche gefunden.</p>;
+    return <p className="text-sm text-muted-foreground">{t('botControl.features.noToolsFound')}</p>;
   }
 
   return (
@@ -103,7 +105,7 @@ export function FeatureGrid({
         <AccordionItem key={categoryEntry.category} value={categoryEntry.category}>
           <AccordionTrigger className="text-left text-base font-semibold text-foreground hover:no-underline">
             <span>{categoryEntry.category}</span>
-            <span className="text-xs text-muted-foreground">{categoryEntry.features.length} Tool(s)</span>
+            <span className="text-xs text-muted-foreground">{categoryEntry.features.length} {t('botControl.features.tools')}</span>
           </AccordionTrigger>
           <AccordionContent>
             <div className="space-y-3 pt-1">

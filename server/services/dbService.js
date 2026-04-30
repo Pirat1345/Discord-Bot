@@ -127,6 +127,10 @@ function normalizeUserRecord(user, fallbackId) {
     password_hash: String(user?.password_hash || ''),
     role: String(user?.role || 'admin').trim().toLowerCase() || 'admin',
     must_change_password: Boolean(user?.must_change_password),
+    totp_enabled: Boolean(user?.totp_enabled),
+    totp_secret: user?.totp_secret || null,
+    totp_secret_pending: user?.totp_secret_pending || null,
+    language: String(user?.language || 'de').trim().toLowerCase(),
     created_at: String(user?.created_at || new Date().toISOString()),
   };
 }
@@ -299,6 +303,10 @@ async function writeDb(db) {
       password_hash: String(user.password_hash || ''),
       role: String(user.role || 'admin').trim().toLowerCase() || 'admin',
       must_change_password: Boolean(user.must_change_password),
+      totp_enabled: Boolean(user.totp_enabled),
+      totp_secret: user.totp_secret || null,
+      totp_secret_pending: user.totp_secret_pending || null,
+      language: String(user.language || 'de').trim().toLowerCase(),
       bot_token: String(settings.bot_token || ''),
       created_at: String(user.created_at || new Date().toISOString()),
     };

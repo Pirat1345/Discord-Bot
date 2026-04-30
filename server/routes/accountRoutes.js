@@ -102,11 +102,11 @@ router.patch('/', requireAuth, requirePermission('write'), async (req, res) => {
     const normalizedUsername = String(username).trim().toLowerCase();
 
     if (!normalizedUsername) {
-      return res.status(400).json({ error: 'Benutzername darf nicht leer sein.' });
+      return res.status(400).json({ error: 'Username must not be empty.' });
     }
 
     if (isUsernameInUse(db, normalizedUsername, user.id)) {
-      return res.status(409).json({ error: 'Dieser Benutzername ist bereits vergeben.' });
+      return res.status(409).json({ error: 'This username is already taken.' });
     }
 
     user.username = normalizedUsername;
@@ -116,7 +116,7 @@ router.patch('/', requireAuth, requirePermission('write'), async (req, res) => {
     const normalizedDisplayName = String(displayName).trim();
 
     if (!normalizedDisplayName) {
-      return res.status(400).json({ error: 'Anzeigename darf nicht leer sein.' });
+      return res.status(400).json({ error: 'Display name must not be empty.' });
     }
 
     user.display_name = normalizedDisplayName;
@@ -128,7 +128,7 @@ router.patch('/', requireAuth, requirePermission('write'), async (req, res) => {
     if (normalizedAvatar) {
       const avatarFile = await writeAvatarFile(user.id, normalizedAvatar);
       if (!avatarFile) {
-        return res.status(400).json({ error: 'Avatar muss ein Bild im Data-URL-Format sein.' });
+        return res.status(400).json({ error: 'Avatar must be an image in data URL format.' });
       }
 
       user.avatar_file = avatarFile;
@@ -146,7 +146,7 @@ router.patch('/', requireAuth, requirePermission('write'), async (req, res) => {
     if (String(newPassword).length < 5) {
       return res
         .status(400)
-        .json({ error: 'Neues Passwort muss mindestens 5 Zeichen lang sein.' });
+        .json({ error: 'New password must be at least 5 characters long.' });
     }
 
     const validCurrent = await bcrypt.compare(
@@ -155,7 +155,7 @@ router.patch('/', requireAuth, requirePermission('write'), async (req, res) => {
     );
 
     if (!validCurrent) {
-      return res.status(401).json({ error: 'Aktuelles Passwort ist falsch.' });
+      return res.status(401).json({ error: 'Current password is incorrect.' });
     }
 
     user.password_hash = await bcrypt.hash(String(newPassword), 10);
@@ -197,16 +197,16 @@ router.post('/users', requireAuth, requirePermission('admin'), async (req, res) 
   const normalizedRole = String(role || '').trim().toLowerCase();
 
   if (!normalizedUsername || String(password || '').length < 5) {
-    return res.status(400).json({ error: 'Benutzername und Passwort (mind. 5 Zeichen) sind erforderlich.' });
+    return res.status(400).json({ error: 'Username and password (min. 5 characters) are required.' });
   }
 
   if (!allowedRoles.has(normalizedRole)) {
-    return res.status(400).json({ error: 'Ungültige Rolle. Erlaubt: read, write, use, admin.' });
+    return res.status(400).json({ error: 'Invalid role. Allowed: read, write, use, admin.' });
   }
 
   const db = await readDb();
   if (isUsernameInUse(db, normalizedUsername)) {
-    return res.status(409).json({ error: 'Dieser Benutzername ist bereits vergeben.' });
+    return res.status(409).json({ error: 'This username is already taken.' });
   }
 
   const user = {
@@ -235,23 +235,23 @@ router.delete('/users/:userId', requireAuth, requirePermission('admin'), async (
   const targetUserId = String(req.params.userId || '').trim();
 
   if (!targetUserId) {
-    return res.status(400).json({ error: 'Ungültige Benutzer-ID.' });
+    return res.status(400).json({ error: 'Invalid user ID.' });
   }
 
   const db = await readDb();
   const adminCount = db.users.filter((entry) => entry.role === 'admin').length;
   if (adminCount === 0) {
-    return res.status(409).json({ error: 'Es muss mindestens ein Admin-Account existieren.' });
+    return res.status(409).json({ error: 'At least one admin account must exist.' });
   }
 
   const targetUser = findUserById(db, targetUserId);
 
   if (!targetUser) {
-    return res.status(404).json({ error: 'Account nicht gefunden.' });
+    return res.status(404).json({ error: 'Account not found.' });
   }
 
   if (targetUser.role === 'admin') {
-    return res.status(403).json({ error: 'Admin-Accounts dürfen nicht gelöscht werden.' });
+    return res.status(403).json({ error: 'Admin accounts cannot be deleted.' });
   }
 
   db.users = db.users.filter((user) => user.id !== targetUser.id);
@@ -271,17 +271,17 @@ router.delete('/self', requireAuth, async (req, res) => {
   const db = await readDb();
   const adminCount = db.users.filter((entry) => entry.role === 'admin').length;
   if (adminCount === 0) {
-    return res.status(409).json({ error: 'Es muss mindestens ein Admin-Account existieren.' });
+    return res.status(409).json({ error: 'At least one admin account must exist.' });
   }
 
   const user = findUserById(db, req.session.userId);
 
   if (!user) {
-    return res.status(401).json({ error: 'Nicht eingeloggt.' });
+    return res.status(401).json({ error: 'Not logged in.' });
   }
 
   if (user.role === 'admin') {
-    return res.status(403).json({ error: 'Admin-Accounts dürfen nicht gelöscht werden.' });
+    return res.status(403).json({ error: 'Admin accounts cannot be deleted.' });
   }
 
   db.users = db.users.filter((entry) => entry.id !== user.id);
@@ -302,13 +302,35 @@ router.delete('/self', requireAuth, async (req, res) => {
 
 // ── 2FA / TOTP ───────────────────────────────────────────────
 
+// ── Language preference ──────────────────────────────────────
+
+router.patch('/language', requireAuth, async (req, res) => {
+  const { language } = req.body || {};
+  const code = String(language || '').trim().toLowerCase();
+
+  if (!code || !/^[a-z]{2,5}$/.test(code)) {
+    return res.status(400).json({ error: 'Invalid language code.' });
+  }
+
+  const db = await readDb();
+  const user = findUserById(db, req.session.userId);
+  if (!user) return res.status(401).json({ error: 'Not logged in.' });
+
+  user.language = code;
+  await writeDb(db);
+
+  return res.json({ user: sanitizeUser(user) });
+});
+
+// ── 2FA / TOTP (cont.) ──────────────────────────────────────
+
 router.post('/2fa/setup', requireAuth, requirePermission('write'), async (req, res) => {
   const db = await readDb();
   const user = findUserById(db, req.session.userId);
-  if (!user) return res.status(401).json({ error: 'Nicht eingeloggt.' });
+  if (!user) return res.status(401).json({ error: 'Not logged in.' });
 
   if (user.totp_enabled) {
-    return res.status(400).json({ error: '2FA ist bereits aktiviert.' });
+    return res.status(400).json({ error: '2FA is already enabled.' });
   }
 
   const secret = new Secret();
@@ -324,21 +346,21 @@ router.post('/2fa/setup', requireAuth, requirePermission('write'), async (req, r
 
 router.post('/2fa/verify', requireAuth, requirePermission('write'), async (req, res) => {
   const { code } = req.body || {};
-  if (!code) return res.status(400).json({ error: 'Code erforderlich.' });
+  if (!code) return res.status(400).json({ error: 'Code required.' });
 
   const db = await readDb();
   const user = findUserById(db, req.session.userId);
-  if (!user) return res.status(401).json({ error: 'Nicht eingeloggt.' });
+  if (!user) return res.status(401).json({ error: 'Not logged in.' });
 
   if (!user.totp_secret_pending) {
-    return res.status(400).json({ error: 'Bitte zuerst 2FA einrichten.' });
+    return res.status(400).json({ error: 'Please set up 2FA first.' });
   }
 
   const totp = new TOTP({ issuer: 'BotPanel', label: user.username, secret: Secret.fromBase32(user.totp_secret_pending) });
   const valid = totp.validate({ token: String(code).trim(), window: 1 }) !== null;
 
   if (!valid) {
-    return res.status(400).json({ error: 'Ungültiger Code. Bitte erneut versuchen.' });
+    return res.status(400).json({ error: 'Invalid code. Please try again.' });
   }
 
   user.totp_secret = user.totp_secret_pending;
@@ -351,14 +373,14 @@ router.post('/2fa/verify', requireAuth, requirePermission('write'), async (req, 
 
 router.post('/2fa/disable', requireAuth, requirePermission('write'), async (req, res) => {
   const { password } = req.body || {};
-  if (!password) return res.status(400).json({ error: 'Passwort erforderlich.' });
+  if (!password) return res.status(400).json({ error: 'Password required.' });
 
   const db = await readDb();
   const user = findUserById(db, req.session.userId);
-  if (!user) return res.status(401).json({ error: 'Nicht eingeloggt.' });
+  if (!user) return res.status(401).json({ error: 'Not logged in.' });
 
   const validPassword = await bcrypt.compare(String(password), user.password_hash);
-  if (!validPassword) return res.status(401).json({ error: 'Passwort ist falsch.' });
+  if (!validPassword) return res.status(401).json({ error: 'Password is incorrect.' });
 
   user.totp_secret = null;
   user.totp_secret_pending = null;

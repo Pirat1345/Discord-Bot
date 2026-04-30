@@ -14,7 +14,7 @@ function requirePermission(permission) {
   return (req, res, next) => {
     const role = req.authUser?.role;
     if (!hasPermission(role, permission)) {
-      return res.status(403).json({ error: 'Keine Berechtigung für diese Aktion.' });
+      return res.status(403).json({ error: 'No permission for this action.' });
     }
     return next();
   };

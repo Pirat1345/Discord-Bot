@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
-import { ChevronDown, Bot, Globe, Home, User, Users } from 'lucide-react';
+import { ChevronDown, Bot, Globe, Home, Languages, User, Users } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -39,6 +40,7 @@ function writeStoredOpenState(key: string, value: boolean) {
 }
 
 export function SettingsSidebar() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { pathname } = useLocation();
   const isAdmin = user?.role === 'admin';
@@ -61,19 +63,20 @@ export function SettingsSidebar() {
       writeStoredOpenState(PROFILE_OPEN_KEY, true);
     }
 
-    if (pathname.startsWith('/settings/configuration')) {
+    if (pathname.startsWith('/settings/configuration') || pathname.startsWith('/settings/language')) {
       setConfigurationOpen(true);
       writeStoredOpenState(CONFIGURATION_OPEN_KEY, true);
     }
   }, [pathname]);
   const profileLinks = [
-    { title: 'Mein Profil', url: '/settings/profile', icon: User },
-    ...(isAdmin ? [{ title: 'Benutzerverwaltung', url: '/settings/users', icon: Users }] : []),
+    { title: t('sidebar.myProfile'), url: '/settings/profile', icon: User },
+    ...(isAdmin ? [{ title: t('sidebar.userManagement'), url: '/settings/users', icon: Users }] : []),
   ];
 
   const configurationLinks = [
-    { title: 'Allgemein', url: '/settings/configuration/general', icon: Globe },
-    { title: 'Discord Bot', url: '/settings/configuration/discord', icon: Bot },
+    { title: t('sidebar.general'), url: '/settings/configuration/general', icon: Globe },
+    { title: t('sidebar.discordBot'), url: '/settings/configuration/discord', icon: Bot },
+    { title: t('sidebar.language'), url: '/settings/language', icon: Languages },
   ];
 
   return (
@@ -90,7 +93,7 @@ export function SettingsSidebar() {
                   activeClassName="bg-sidebar-accent text-primary font-medium"
                 >
                   <Home className="mr-3 h-5 w-5" />
-                  <span>Alle Einstellungen</span>
+                  <span>{t('sidebar.allSettings')}</span>
                 </NavLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -103,7 +106,7 @@ export function SettingsSidebar() {
           <CollapsibleTrigger asChild>
             <SidebarGroupLabel asChild className="cursor-pointer">
               <button type="button" className="flex w-full items-center justify-between px-2 text-sm uppercase tracking-wider text-muted-foreground">
-                <span>Profil</span>
+                <span>{t('sidebar.profile')}</span>
                 <ChevronDown className={`h-5 w-5 transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
               </button>
             </SidebarGroupLabel>
@@ -136,7 +139,7 @@ export function SettingsSidebar() {
           <CollapsibleTrigger asChild>
             <SidebarGroupLabel asChild className="cursor-pointer">
               <button type="button" className="flex w-full items-center justify-between px-2 text-sm uppercase tracking-wider text-muted-foreground">
-                <span>Konfiguration</span>
+                <span>{t('sidebar.configuration')}</span>
                 <ChevronDown className={`h-5 w-5 transition-transform ${configurationOpen ? 'rotate-180' : ''}`} />
               </button>
             </SidebarGroupLabel>

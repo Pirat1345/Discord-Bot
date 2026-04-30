@@ -29,7 +29,7 @@ async function cleanupGuildByRest(guildId, token) {
   const guildResponse = await fetchGuildRest(guildId, token);
   if (!guildResponse.ok) {
     const text = await getDiscordErrorMessage(guildResponse);
-    throw new Error(`Server konnte nicht geladen werden: ${text}`);
+    throw new Error(`Server could not be loaded: ${text}`);
   }
 
   const channelsResponse = await fetch(`https://discord.com/api/v10/guilds/${guildId}/channels`, {
@@ -41,7 +41,7 @@ async function cleanupGuildByRest(guildId, token) {
 
   if (!channelsResponse.ok) {
     const text = await getDiscordErrorMessage(channelsResponse);
-    throw new Error(`Kanaele konnten nicht geladen werden: ${text}`);
+    throw new Error(`Channels could not be loaded: ${text}`);
   }
 
   const rolesResponse = await fetch(`https://discord.com/api/v10/guilds/${guildId}/roles`, {
@@ -53,7 +53,7 @@ async function cleanupGuildByRest(guildId, token) {
 
   if (!rolesResponse.ok) {
     const text = await getDiscordErrorMessage(rolesResponse);
-    throw new Error(`Rollen konnten nicht geladen werden: ${text}`);
+    throw new Error(`Roles could not be loaded: ${text}`);
   }
 
   const channels = await channelsResponse.json();
@@ -76,7 +76,7 @@ async function cleanupGuildByRest(guildId, token) {
 
     if (!response.ok) {
       const text = await getDiscordErrorMessage(response);
-      throw new Error(`Kanal ${channel.name || channel.id} konnte nicht geloescht werden: ${text}`);
+      throw new Error(`Channel could not be deleted: ${text}`);
     }
 
     channelDeleteResults.push(channel.id);
@@ -94,7 +94,7 @@ async function cleanupGuildByRest(guildId, token) {
 
     if (!response.ok) {
       const text = await getDiscordErrorMessage(response);
-      throw new Error(`Rolle ${role.name || role.id} konnte nicht geloescht werden: ${text}`);
+      throw new Error(`Role could not be deleted: ${text}`);
     }
 
     roleDeleteResults.push(role.id);

@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 import * as botApi from '@/lib/botApi';
 import type { Json } from '@/types/api';
 import type { FeatureConfigProps } from '../types';
@@ -15,6 +16,7 @@ interface Props extends FeatureConfigProps {
 
 export function CountingConfig({ config, setLocalConfig, saveConfig, featureId, featureConfig, selectedGuildId, showCopyableError, getConfig, scopedFeatureKey, setLocalConfigs }: Props) {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const qc = useQueryClient();
 
   const updateGuildFeature = useMutation({
@@ -31,13 +33,13 @@ export function CountingConfig({ config, setLocalConfig, saveConfig, featureId, 
   const hasLastUser = Boolean(lastUserId);
   const channelId = String(config.channelId || '').trim();
   const lastUserLabel = hasLastUser
-    ? `${lastUsername || 'Unbekannt'} (${lastUserId})`
-    : 'Keiner';
+    ? `${lastUsername || t('botControl.features.counting.unknown')} (${lastUserId})`
+    : t('botControl.features.counting.noUser');
 
   return (
     <>
       <div className="space-y-2">
-        <Label className="text-foreground">Counting Channel ID</Label>
+        <Label className="text-foreground">{t('botControl.features.counting.channelLabel')}</Label>
         <Input
           placeholder="z.B. 123456789012345678"
           value={config.channelId || ''}
@@ -46,16 +48,16 @@ export function CountingConfig({ config, setLocalConfig, saveConfig, featureId, 
         />
       </div>
       <div className="rounded-md border border-border bg-card px-3 py-2 text-sm text-muted-foreground">
-        <p>Aktiver Channel: <span className="font-semibold text-foreground">{channelId ? `#${channelId}` : 'Nicht gesetzt'}</span></p>
-        <p>Aktueller Count: <span className="font-semibold text-foreground">{currentCount}</span></p>
-        <p>Letzter User: <span className="font-semibold text-foreground">{lastUserLabel}</span></p>
+        <p>{t('botControl.features.counting.activeChannel')} <span className="font-semibold text-foreground">{channelId ? `#${channelId}` : t('botControl.features.counting.notSet')}</span></p>
+        <p>{t('botControl.features.counting.currentCount')} <span className="font-semibold text-foreground">{currentCount}</span></p>
+        <p>{t('botControl.features.counting.lastUser')} <span className="font-semibold text-foreground">{lastUserLabel}</span></p>
       </div>
       <p className="text-xs text-muted-foreground">
-        Discord Commands: /set game counting und /set game counting-clear
+        {t('botControl.features.counting.commands')}
       </p>
       <div className="flex gap-2">
         <Button onClick={() => saveConfig(featureId, 'counting', featureConfig)} variant="secondary">
-          Speichern
+          {t('botControl.features.save')}
         </Button>
         <Button
           variant="secondary"
@@ -83,14 +85,14 @@ export function CountingConfig({ config, setLocalConfig, saveConfig, featureId, 
                 delete next[scopedFeatureKey('counting')];
                 return next;
               });
-              toast({ title: 'Counting wurde gelöscht' });
+              toast({ title: t('botControl.features.counting.deleted') });
             } catch (error) {
-              const msg = error instanceof Error ? error.message : 'Counting konnte nicht gelöscht werden.';
-              showCopyableError('Fehler', msg);
+              const msg = error instanceof Error ? error.message : t('botControl.features.counting.deleteError');
+              showCopyableError(t('common.error'), msg);
             }
           }}
         >
-          Spiel löschen
+          {t('botControl.features.counting.deleteGame')}
         </Button>
       </div>
     </>

@@ -163,10 +163,14 @@ const copyToClipboard = async (text: string): Promise<boolean> => {
     const el = document.createElement("textarea");
     el.value = text;
     el.setAttribute("readonly", "");
-    el.style.position = "absolute";
-    el.style.left = "-9999px";
+    el.style.position = "fixed";
+    el.style.left = "0";
+    el.style.top = "0";
+    el.style.opacity = "0";
     document.body.appendChild(el);
+    el.focus();
     el.select();
+    el.setSelectionRange(0, text.length);
     const copied = document.execCommand("copy");
     document.body.removeChild(el);
     return copied;
@@ -190,7 +194,7 @@ const withDefaultErrorAction = (props: Toast): Toast => {
     action: React.createElement(
       ToastAction,
       {
-        altText: "Fehler kopieren",
+        altText: "Copy error",
         onClick: () => {
           void copyToClipboard(copyText);
         },

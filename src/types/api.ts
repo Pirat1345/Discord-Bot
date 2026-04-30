@@ -14,6 +14,7 @@ export interface LocalUser {
   role: string;
   must_change_password: boolean;
   totp_enabled: boolean;
+  language: string;
   created_at: string;
 }
 

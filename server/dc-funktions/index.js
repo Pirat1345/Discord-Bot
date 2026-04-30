@@ -51,8 +51,8 @@ async function handleInteractionCreate({ userId, interaction }) {
         const embed = buildStatusEmbed(data, address, port, edition);
         await interaction.editReply({ embeds: [embed] });
       } catch (error) {
-        const msg = error instanceof Error ? error.message : 'Server konnte nicht erreicht werden.';
-        await interaction.editReply({ content: `❌ Fehler: ${msg}` });
+        const msg = error instanceof Error ? error.message : 'Server could not be reached.';
+        await interaction.editReply({ content: `❌ Error: ${msg}` });
       }
       return;
     }
@@ -68,13 +68,13 @@ async function handleInteractionCreate({ userId, interaction }) {
     const guildId = String(interaction.guildId || '').trim();
     const channelId = String(interaction.channelId || '').trim();
     if (!guildId || !channelId) {
-      await interaction.reply({ content: 'Dieser Command funktioniert nur in einem Server-Channel.', ephemeral: true });
+      await interaction.reply({ content: 'This command only works in a server channel.', ephemeral: true });
       return;
     }
 
     if (subcommand === 'counting-clear') {
       await clearCountingForGuild({ userId, guildId });
-      await interaction.reply({ content: 'Counting wurde vollständig gelöscht (Channel, Score und letzter User).', ephemeral: true });
+      await interaction.reply({ content: 'Counting has been completely deleted (channel, score and last user).', ephemeral: true });
       return;
     }
 
@@ -83,14 +83,14 @@ async function handleInteractionCreate({ userId, interaction }) {
       try {
         await announceCountingStarted(interaction.channel);
       } catch { /* ignore */ }
-      await interaction.reply({ content: `Counting wurde für diesen Channel aktiviert (${channelId}).`, ephemeral: true });
+      await interaction.reply({ content: `Counting has been enabled for this channel (${channelId}).`, ephemeral: true });
       return;
     }
 
     if (subcommand === 'minesweeper') {
       await interaction.deferReply({ ephemeral: true });
       await setMinesweeperForGuild({ userId, guildId, channelId, channel: interaction.channel });
-      await interaction.editReply({ content: 'Minesweeper wurde in diesem Channel gestartet! 💣' });
+      await interaction.editReply({ content: 'Minesweeper has been started in this channel! ??�' });
       return;
     }
 
@@ -104,11 +104,11 @@ async function handleInteractionCreate({ userId, interaction }) {
     if (subcommand === 'minesweeper') {
       const guildId = String(interaction.guildId || '').trim();
       if (!guildId) {
-        await interaction.reply({ content: 'Dieser Command funktioniert nur in einem Server.', ephemeral: true });
+        await interaction.reply({ content: 'This command only works in a server.', ephemeral: true });
         return;
       }
       await resetMinesweeperForGuild({ userId, guildId });
-      await interaction.reply({ content: 'Minesweeper wurde vollständig zurückgesetzt (Spiel, Channel, alles).', ephemeral: true });
+      await interaction.reply({ content: 'Minesweeper has been completely reset (game, channel, everything).', ephemeral: true });
       return;
     }
 

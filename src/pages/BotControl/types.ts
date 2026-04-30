@@ -29,7 +29,7 @@ export const featureCategories: Record<string, string> = {
   'free-games': 'News',
 };
 
-export const categoryOrder = ['Debug', 'Moderation', 'Community', 'Commands', 'Games', 'News', 'Sonstiges'];
+export const categoryOrder = ['Debug', 'Moderation', 'Community', 'Commands', 'Games', 'News', 'Other'];
 
 export type ActiveSection = 'bot' | 'webhook' | 'account' | 'server' | 'dm';
 

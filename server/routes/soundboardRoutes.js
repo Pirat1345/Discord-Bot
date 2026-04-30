@@ -37,7 +37,7 @@ router.post('/upload', requireAuth, requirePermission('write'), express.raw({ ty
   const fileName = req.headers['x-file-name'];
 
   if (!fileName) {
-    return res.status(400).json({ error: 'Dateiname fehlt (X-File-Name Header).' });
+    return res.status(400).json({ error: 'Filename missing (X-File-Name header).' });
   }
 
   const sanitized = path.basename(String(fileName));
@@ -52,7 +52,7 @@ router.post('/upload', requireAuth, requirePermission('write'), express.raw({ ty
   }
 
   if (req.body.length > MAX_FILE_SIZE) {
-    return res.status(400).json({ error: 'Datei ist zu groß (max. 8 MB).' });
+    return res.status(400).json({ error: 'File is too large (max. 8 MB).' });
   }
 
   const dir = ensureAudioDir(userId);
@@ -68,14 +68,14 @@ router.delete('/files/:fileName', requireAuth, requirePermission('write'), (req,
   const fileName = String(req.params.fileName || '').trim();
 
   if (!fileName) {
-    return res.status(400).json({ error: 'Dateiname fehlt.' });
+    return res.status(400).json({ error: 'Filename missing.' });
   }
 
   try {
     deleteAudioFile(userId, fileName);
     return res.json({ ok: true });
   } catch (error) {
-    return res.status(400).json({ error: error instanceof Error ? error.message : 'Datei konnte nicht gelöscht werden.' });
+    return res.status(400).json({ error: error instanceof Error ? error.message : 'File could not be deleted.' });
   }
 });
 
@@ -107,7 +107,7 @@ router.post('/join', requireAuth, requirePermission('use'), async (req, res) => 
   const client = getActiveClientForUser(userId);
 
   if (!client) {
-    return res.status(400).json({ error: 'Bot ist offline. Starte zuerst den Bot.' });
+    return res.status(400).json({ error: 'Bot is offline. Start the bot first.' });
   }
 
   try {
@@ -130,7 +130,7 @@ router.post('/play/:fileName', requireAuth, requirePermission('use'), async (req
   const fileName = String(req.params.fileName || '').trim();
 
   if (!fileName) {
-    return res.status(400).json({ error: 'Dateiname fehlt.' });
+    return res.status(400).json({ error: 'Filename missing.' });
   }
 
   try {

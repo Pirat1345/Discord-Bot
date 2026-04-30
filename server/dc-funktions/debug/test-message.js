@@ -51,7 +51,7 @@ async function sendDiscordMessageViaRest(token, channelId, message, repeatCount 
       }
 
       const errorBody = parsed ? JSON.stringify(parsed) : raw;
-      const err = new Error(`Discord API Fehler: ${errorBody}`);
+      const err = new Error(`Discord API error: ${errorBody}`);
       err.statusCode = response.status;
       throw err;
     }
@@ -79,7 +79,7 @@ async function sendDiscordDmViaRest(token, userId, message, repeatCount = 1, res
     let parsed = null;
     try { parsed = JSON.parse(raw); } catch { parsed = null; }
     const errorBody = parsed ? JSON.stringify(parsed) : raw;
-    const err = new Error(`DM-Channel konnte nicht geöffnet werden: ${errorBody}`);
+    const err = new Error(`DM channel could not be opened: ${errorBody}`);
     err.statusCode = dmChannelResponse.status;
     throw err;
   }

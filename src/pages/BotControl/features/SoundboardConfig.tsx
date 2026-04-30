@@ -4,6 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2, Phone, PhoneOff, Play, Pencil, Trash } from 'lucide-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import * as botApi from '@/lib/botApi';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,6 +16,7 @@ interface Props {
 export function SoundboardConfig({ showCopyableError }: Props) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const { data: soundboardFiles, refetch: refetchSoundboardFiles } = useQuery({
     queryKey: ['soundboard-files', user?.id],
@@ -64,14 +66,14 @@ export function SoundboardConfig({ showCopyableError }: Props) {
     <>
       <div className="rounded-md border border-border bg-card px-3 py-2 text-sm text-muted-foreground space-y-1">
         <p>
-          Voice-Status:{' '}
+          {t('botControl.features.soundboard.voiceStatus')}{' '}
           <span className={cn('font-semibold', voiceConnected ? 'text-success' : 'text-foreground')}>
             {voiceConnected
-              ? `Verbunden mit ${soundboardStatus?.channelName || 'Channel'} (${soundboardStatus?.guildName || 'Server'})`
-              : 'Nicht verbunden'}
+              ? t('botControl.features.soundboard.connected', { channel: soundboardStatus?.channelName || 'Channel', guild: soundboardStatus?.guildName || 'Server' })
+              : t('botControl.features.soundboard.notConnected')}
           </span>
         </p>
-        <p className="text-xs">Audio-Dateien sind benutzerübergreifend für alle Server gleich.</p>
+        <p className="text-xs">{t('botControl.features.soundboard.filesShared')}</p>
       </div>
 
       <div className="flex gap-2">
@@ -83,15 +85,15 @@ export function SoundboardConfig({ showCopyableError }: Props) {
             onClick={async () => {
               try {
                 await soundboardLeave.mutateAsync();
-                toast({ title: 'Voice getrennt' });
+                toast({ title: t('botControl.features.soundboard.disconnected') });
               } catch (error) {
-                const msg = error instanceof Error ? error.message : 'Trennen fehlgeschlagen.';
-                showCopyableError('Fehler', msg);
+                const msg = error instanceof Error ? error.message : t('botControl.features.soundboard.disconnectError');
+                showCopyableError(t('common.error'), msg);
               }
             }}
           >
             {soundboardLeave.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <PhoneOff className="h-4 w-4" />}
-            Trennen
+            {t('botControl.features.soundboard.disconnect')}
           </Button>
         ) : (
           <Button
@@ -101,25 +103,25 @@ export function SoundboardConfig({ showCopyableError }: Props) {
               try {
                 const result = await soundboardJoin.mutateAsync();
                 toast({
-                  title: 'Voice verbunden',
+                  title: t('botControl.features.soundboard.voiceConnected'),
                   description: result.channelName
-                    ? `Bot ist in ${result.channelName} (${result.guildName}).`
-                    : 'Bot ist in einem Voice-Channel.',
+                    ? t('botControl.features.soundboard.voiceConnectedDesc', { channel: result.channelName, guild: result.guildName })
+                    : t('botControl.features.soundboard.voiceConnectedGeneric'),
                 });
               } catch (error) {
-                const msg = error instanceof Error ? error.message : 'Beitreten fehlgeschlagen.';
-                showCopyableError('Fehler', msg);
+                const msg = error instanceof Error ? error.message : t('botControl.features.soundboard.joinError');
+                showCopyableError(t('common.error'), msg);
               }
             }}
           >
             {soundboardJoin.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Phone className="h-4 w-4" />}
-            Voice beitreten
+            {t('botControl.features.soundboard.join')}
           </Button>
         )}
       </div>
 
       <div className="space-y-2">
-        <Label className="text-foreground">Audio hochladen (.mp3 / .wav, max. 8 MB)</Label>
+        <Label className="text-foreground">{t('botControl.features.soundboard.uploadLabel')}</Label>
         <div className="flex gap-2">
           <Input
             type="file"
@@ -131,11 +133,11 @@ export function SoundboardConfig({ showCopyableError }: Props) {
 
               try {
                 await soundboardUpload.mutateAsync(file);
-                toast({ title: 'Hochgeladen', description: `${file.name} wurde gespeichert.` });
+                toast({ title: t('botControl.features.soundboard.uploaded'), description: t('botControl.features.soundboard.uploadedDesc', { name: file.name }) });
                 e.target.value = '';
               } catch (error) {
-                const msg = error instanceof Error ? error.message : 'Upload fehlgeschlagen.';
-                showCopyableError('Fehler', msg);
+                const msg = error instanceof Error ? error.message : t('botControl.features.soundboard.uploadError');
+                showCopyableError(t('common.error'), msg);
               }
             }}
           />
@@ -143,10 +145,10 @@ export function SoundboardConfig({ showCopyableError }: Props) {
       </div>
 
       {files.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Noch keine Audio-Dateien hochgeladen.</p>
+        <p className="text-sm text-muted-foreground">{t('botControl.features.soundboard.noFiles')}</p>
       ) : (
         <div className="space-y-2">
-          <Label className="text-foreground">Sounds ({files.length})</Label>
+          <Label className="text-foreground">{t('botControl.features.soundboard.soundsLabel')} ({files.length})</Label>
           <div className="grid gap-2 sm:grid-cols-2">
             {files.map((file) => (
               <div
@@ -161,20 +163,20 @@ export function SoundboardConfig({ showCopyableError }: Props) {
                   <Button
                     size="icon"
                     variant="secondary"
-                    title="Umbenennen"
+                    title={t('botControl.features.soundboard.renameTitle')}
                     disabled={soundboardRename.isPending}
                     onClick={async () => {
                       const ext = file.name.slice(file.name.lastIndexOf('.'));
                       const baseName = file.name.slice(0, file.name.lastIndexOf('.'));
-                      const input = window.prompt('Neuer Name (ohne Endung):', baseName);
+                      const input = window.prompt(t('botControl.features.soundboard.renamePrompt'), baseName);
                       if (input === null || input.trim() === '' || input.trim() === baseName) return;
                       const newName = `${input.trim()}${ext}`;
                       try {
                         await soundboardRename.mutateAsync({ oldName: file.name, newName });
-                        toast({ title: 'Umbenannt', description: `${file.name} → ${newName}` });
+                        toast({ title: t('botControl.features.soundboard.renamed'), description: t('botControl.features.soundboard.renamedDesc', { oldName: file.name, newName }) });
                       } catch (error) {
-                        const msg = error instanceof Error ? error.message : 'Umbenennen fehlgeschlagen.';
-                        showCopyableError('Fehler', msg);
+                        const msg = error instanceof Error ? error.message : t('botControl.features.soundboard.renameError');
+                        showCopyableError(t('common.error'), msg);
                       }
                     }}
                   >
@@ -184,14 +186,14 @@ export function SoundboardConfig({ showCopyableError }: Props) {
                     size="icon"
                     variant="secondary"
                     disabled={soundboardPlay.isPending || !voiceConnected}
-                    title={voiceConnected ? 'Abspielen' : 'Zuerst Voice beitreten'}
+                    title={voiceConnected ? t('botControl.features.soundboard.playTitle') : t('botControl.features.soundboard.playDisabledTitle')}
                     onClick={async () => {
                       try {
                         await soundboardPlay.mutateAsync(file.name);
-                        toast({ title: 'Abgespielt', description: file.name });
+                        toast({ title: t('botControl.features.soundboard.played'), description: file.name });
                       } catch (error) {
-                        const msg = error instanceof Error ? error.message : 'Wiedergabe fehlgeschlagen.';
-                        showCopyableError('Fehler', msg);
+                        const msg = error instanceof Error ? error.message : t('botControl.features.soundboard.playError');
+                        showCopyableError(t('common.error'), msg);
                       }
                     }}
                   >
@@ -204,10 +206,10 @@ export function SoundboardConfig({ showCopyableError }: Props) {
                     onClick={async () => {
                       try {
                         await soundboardDelete.mutateAsync(file.name);
-                        toast({ title: 'Gelöscht', description: `${file.name} wurde entfernt.` });
+                        toast({ title: t('botControl.features.soundboard.deleted'), description: t('botControl.features.soundboard.deletedDesc', { name: file.name }) });
                       } catch (error) {
-                        const msg = error instanceof Error ? error.message : 'Löschen fehlgeschlagen.';
-                        showCopyableError('Fehler', msg);
+                        const msg = error instanceof Error ? error.message : t('botControl.features.soundboard.deleteError');
+                        showCopyableError(t('common.error'), msg);
                       }
                     }}
                   >

@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { Bot, Loader2, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Auth() {
+  const { t } = useTranslation();
   const { user, loading, needsInitialSetup } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -32,7 +34,7 @@ export default function Auth() {
     e.preventDefault();
 
     if (needsInitialSetup && password !== confirmPassword) {
-      toast({ title: 'Fehler', description: 'Die Passwörter stimmen nicht überein.', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('auth.passwordMismatch'), variant: 'destructive' });
       return;
     }
 
@@ -41,9 +43,9 @@ export default function Auth() {
     if (needsInitialSetup) {
       const { error } = await initializeAdmin(username, password);
       if (error) {
-        toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+        toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
       } else {
-        toast({ title: 'Erfolg', description: 'Admin wurde angelegt und eingeloggt.' });
+        toast({ title: t('auth.adminCreated'), description: t('auth.adminCreatedDescription') });
       }
     } else {
       const result = await signIn(username, password, requires2fa ? totpCode : undefined);
@@ -51,7 +53,7 @@ export default function Auth() {
         setRequires2fa(true);
         setTotpCode('');
       } else if (result.error) {
-        toast({ title: 'Fehler', description: result.error.message, variant: 'destructive' });
+        toast({ title: t('common.error'), description: result.error.message, variant: 'destructive' });
       }
     }
 
@@ -66,14 +68,14 @@ export default function Auth() {
             {requires2fa ? <ShieldCheck className="h-8 w-8 text-primary" /> : <Bot className="h-8 w-8 text-primary" />}
           </div>
           <CardTitle className="text-2xl text-foreground">
-            {requires2fa ? '2FA-Code eingeben' : needsInitialSetup ? 'Erstkonfiguration' : 'Willkommen zurück'}
+            {requires2fa ? t('auth.twoFaEnterCode') : needsInitialSetup ? t('auth.initialSetupTitle') : t('auth.welcomeBack')}
           </CardTitle>
           <CardDescription className="text-muted-foreground">
             {requires2fa
-              ? 'Gib den 6-stelligen Code aus deiner Authenticator-App ein.'
+              ? t('auth.twoFaEnterDescription')
               : needsInitialSetup
-              ? 'Lege jetzt direkt deinen Admin-Benutzernamen und dein Passwort fest.'
-              : 'Melde dich mit Benutzername und Passwort an.'}
+              ? t('auth.initialSetupDescription')
+              : t('auth.welcomeDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -81,7 +83,7 @@ export default function Auth() {
             {!requires2fa && (
               <>
                 <Input
-                  placeholder="Benutzername"
+                  placeholder={t('auth.username')}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
@@ -89,7 +91,7 @@ export default function Auth() {
                 />
                 <Input
                   type="password"
-                  placeholder={needsInitialSetup ? 'Passwort festlegen' : 'Passwort'}
+                  placeholder={needsInitialSetup ? t('auth.passwordSetPlaceholder') : t('auth.password')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -99,7 +101,7 @@ export default function Auth() {
                 {needsInitialSetup && (
                   <Input
                     type="password"
-                    placeholder="Passwort wiederholen"
+                    placeholder={t('auth.confirmPasswordPlaceholder')}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
@@ -122,11 +124,11 @@ export default function Auth() {
             )}
             <Button type="submit" className="w-full" disabled={submitting || (requires2fa && totpCode.length !== 6)}>
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {requires2fa ? 'Bestätigen' : needsInitialSetup ? 'Admin erstellen' : 'Anmelden'}
+              {requires2fa ? t('auth.confirm') : needsInitialSetup ? t('auth.createAdmin') : t('auth.signIn')}
             </Button>
             {requires2fa && (
               <Button type="button" variant="ghost" className="w-full text-muted-foreground" onClick={() => { setRequires2fa(false); setTotpCode(''); }}>
-                Zurück zum Login
+                {t('auth.twoFaBackToLogin')}
               </Button>
             )}
           </form>

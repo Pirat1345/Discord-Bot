@@ -14,6 +14,7 @@ const { logsRoutes } = require('./routes/logsRoutes');
 const { discordRoutes } = require('./routes/discordRoutes');
 const { gamesRoutes } = require('./routes/gamesRoutes');
 const { soundboardRoutes } = require('./routes/soundboardRoutes');
+const { languageRoutes } = require('./routes/languageRoutes');
 
 const app = express();
 
@@ -48,6 +49,7 @@ app.use('/api/logs', logsRoutes);
 app.use('/api/discord', discordRoutes);
 app.use('/api/games', gamesRoutes);
 app.use('/api/soundboard', soundboardRoutes);
+app.use('/api/languages', languageRoutes);
 
 // Serve built frontend in production
 const distPath = path.join(__dirname, '..', 'dist');
@@ -72,20 +74,20 @@ async function recoverBotsOnStartup() {
     if (!token) {
       settings.is_online = false;
       settings.updated_at = new Date().toISOString();
-      appendLog(db, userId, 'error', 'Bot wurde nach Neustart als offline markiert: Kein Bot-Token gesetzt.');
+      appendLog(db, userId, 'error', 'Bot marked as offline after restart: No bot token set.');
       failed += 1;
       continue;
     }
 
     try {
       await startBotForUser(userId, token);
-      appendLog(db, userId, 'info', 'Bot wurde beim API-Start automatisch neu verbunden.');
+      appendLog(db, userId, 'info', 'Bot automatically reconnected on API start.');
       recovered += 1;
     } catch (error) {
       settings.is_online = false;
       settings.updated_at = new Date().toISOString();
-      const msg = error instanceof Error ? error.message : 'Unbekannter Fehler';
-      appendLog(db, userId, 'error', `Auto-Reconnect beim API-Start fehlgeschlagen: ${msg}`);
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      appendLog(db, userId, 'error', `Auto-reconnect on API start failed: ${msg}`);
       failed += 1;
     }
   }
@@ -95,7 +97,7 @@ async function recoverBotsOnStartup() {
   }
 
   if (recovered > 0 || failed > 0) {
-    console.log(`Bot-Recovery: ${recovered} verbunden, ${failed} fehlgeschlagen.`);
+    console.log(`Bot-Recovery: ${recovered} connected, ${failed} failed.`);
   }
 }
 

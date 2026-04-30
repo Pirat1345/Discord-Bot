@@ -46,7 +46,7 @@ function deleteAudioFile(userId, fileName) {
   const filePath = path.join(getAudioDir(userId), sanitized);
 
   if (!fs.existsSync(filePath)) {
-    throw new Error('Datei nicht gefunden.');
+    throw new Error('File not found.');
   }
 
   fs.unlinkSync(filePath);
@@ -66,7 +66,7 @@ function renameAudioFile(userId, oldName, newName) {
   const newPath = path.join(dir, sanitizedNew);
 
   if (!fs.existsSync(oldPath)) {
-    throw new Error('Datei nicht gefunden.');
+    throw new Error('File not found.');
   }
 
   if (fs.existsSync(newPath)) {
@@ -127,7 +127,7 @@ async function joinVoiceChannelForUser(userId, client) {
     await entersState(connection, VoiceConnectionStatus.Ready, 10_000);
   } catch {
     connection.destroy();
-    throw new Error('Voice-Verbindung konnte nicht hergestellt werden.');
+    throw new Error('Voice connection could not be established.');
   }
 
   activeConnections.set(userId, {
@@ -180,14 +180,14 @@ function leaveVoiceChannelForUser(userId) {
 async function playSoundForUser(userId, fileName) {
   const entry = activeConnections.get(userId);
   if (!entry) {
-    throw new Error('Bot ist in keinem Voice-Channel. Bitte zuerst verbinden.');
+    throw new Error('Bot is not in a voice channel. Please connect first.');
   }
 
   const sanitized = path.basename(fileName);
   const filePath = path.join(getAudioDir(userId), sanitized);
 
   if (!fs.existsSync(filePath)) {
-    throw new Error('Audio-Datei nicht gefunden.');
+    throw new Error('Audio-File not found.');
   }
 
   const resource = createAudioResource(filePath);
@@ -199,7 +199,7 @@ async function playSoundForUser(userId, fileName) {
     });
 
     entry.player.once('error', (error) => {
-      reject(new Error(`Wiedergabe fehlgeschlagen: ${error.message}`));
+      reject(new Error(`Playback failed: ${error.message}`));
     });
   });
 }

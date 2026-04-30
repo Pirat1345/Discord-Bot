@@ -1,0 +1,14 @@
+{
+  "languages": [
+    {
+      "code": "de",
+      "name": "Deutsch",
+      "isDefault": true
+    },
+    {
+      "code": "en",
+      "name": "English",
+      "isDefault": false
+    }
+  ]
+}

@@ -103,7 +103,7 @@ function buildDealEmbed(deal) {
   const remaining = formatTimeRemaining(deal.endDate);
 
   let description = descParts.join(' ');
-  description += `\n\n[Im Browser öffnen](${deal.url}) ↗`;
+  description += `\n\n[Open in browser](${deal.url}) ↗`;
 
   if (remaining) {
     description += `\n\n⏳ ${remaining}`;
@@ -140,7 +140,7 @@ function buildDealEmbed(deal) {
 async function postFreeGamesToChannel(guild, channelId, deals) {
   const channel = await guild.channels.fetch(channelId).catch(() => null);
   if (!channel || typeof channel.send !== 'function') {
-    return { sent: false, reason: 'Channel konnte nicht gefunden werden oder ist nicht beschreibbar.' };
+    return { sent: false, reason: 'Channel could not be found or is not writable.' };
   }
 
   if (deals.length === 0) {
@@ -166,7 +166,7 @@ async function postFreeGamesToChannel(guild, channelId, deals) {
 async function postFreeGamesForGuild({ userId, guild }) {
   const guildId = String(guild?.id || '').trim();
   if (!guildId) {
-    return { sent: false, reason: 'Ungültiger Serverkontext.' };
+    return { sent: false, reason: 'Invalid server context.' };
   }
 
   const db = await readDb();
@@ -178,7 +178,7 @@ async function postFreeGamesForGuild({ userId, guild }) {
   const config = feature.config && typeof feature.config === 'object' ? feature.config : {};
   const channelId = String(config.channelId || '').trim();
   if (!channelId) {
-    return { sent: false, reason: 'Kein Channel für Free Games gesetzt.' };
+    return { sent: false, reason: 'No channel set for Free Games.' };
   }
 
   const data = await getDeals();
@@ -201,7 +201,7 @@ async function autoPostNewDeals(getActiveClientsCallback) {
   try {
     data = await getDeals(true);
   } catch (err) {
-    console.error('[free-games] Auto-Post: Fehler beim Abrufen der Deals:', err);
+    console.error('[free-games] Auto-post: Error fetching deals:', err);
     return;
   }
 
@@ -255,7 +255,7 @@ async function autoPostNewDeals(getActiveClientsCallback) {
         }
         console.log(`[free-games] Auto-Post: ${newDeals.length} neue Deals an ${guildId} gesendet.`);
       } catch (err) {
-        console.error(`[free-games] Auto-Post Fehler für Guild ${guildId}:`, err);
+        console.error(`[free-games] Auto-post error for guild ${guildId}:`, err);
       }
     }
   }

@@ -63,7 +63,7 @@ function normalizeConfig(config) {
     welcomeBots: asBool(raw.welcomeBots, false),
     bannerEnabled: asBool(raw.bannerEnabled, true),
     bannerTitle: String(raw.bannerTitle || 'Willkommen, {user}!').trim(),
-    bannerSubtitle: String(raw.bannerSubtitle || 'Schön, dass du bei {server} bist.').trim(),
+    bannerSubtitle: String(raw.bannerSubtitle || 'Glad to have you at {server}.').trim(),
     bannerFooter: String(raw.bannerFooter || '{server}').trim(),
     backgroundFrom: sanitizeHexColor(raw.backgroundFrom, '#1e3a8a'),
     backgroundTo: sanitizeHexColor(raw.backgroundTo, '#4f46e5'),
@@ -155,34 +155,34 @@ async function renderBannerPngBuffer(svgMarkup) {
 async function sendWelcomeToMember({ userId, guild, member }) {
   const guildId = String(guild?.id || '').trim();
   if (!guildId || !member?.user) {
-    return { sent: false, reason: 'Ungültiger Testkontext.' };
+    return { sent: false, reason: 'Invalid test context.' };
   }
 
   const db = await readDb();
   const feature = ensureGuildConfigAndFeature(db, userId, guildId);
   if (!feature || !feature.enabled) {
-    return { sent: false, reason: 'Feature ist nicht aktiviert.' };
+    return { sent: false, reason: 'Feature is not enabled.' };
   }
 
   const config = normalizeConfig(feature.config);
   if (member.user.bot && !config.welcomeBots) {
-    return { sent: false, reason: 'Bots begrüßen ist deaktiviert.' };
+    return { sent: false, reason: 'Greeting bots is disabled.' };
   }
 
   const channelId = String(config.channelId || '').trim();
   if (!channelId) {
-    return { sent: false, reason: 'Kein Welcome-Channel gesetzt.' };
+    return { sent: false, reason: 'No welcome channel set.' };
   }
 
   let channel = null;
   try {
     channel = await guild.channels.fetch(channelId);
   } catch {
-    return { sent: false, reason: 'Welcome-Channel konnte nicht geladen werden.' };
+    return { sent: false, reason: 'Welcome channel could not be loaded.' };
   }
 
   if (!channel || typeof channel.send !== 'function') {
-    return { sent: false, reason: 'Welcome-Channel ist nicht beschreibbar.' };
+    return { sent: false, reason: 'Welcome channel is not writable.' };
   }
 
   const content = applyPlaceholders(config.message, member).trim();
@@ -237,7 +237,7 @@ async function sendWelcomeTestForGuild({ userId, guild }) {
   }
 
   if (!member) {
-    return { sent: false, reason: 'Kein Test-Member verfügbar.' };
+    return { sent: false, reason: 'No test member available.' };
   }
 
   return sendWelcomeToMember({ userId, guild, member });

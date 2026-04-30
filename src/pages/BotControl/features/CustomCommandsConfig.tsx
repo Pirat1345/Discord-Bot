@@ -1,17 +1,19 @@
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { useTranslation } from 'react-i18next';
 import type { FeatureConfigProps } from '../types';
 
 export function CustomCommandsConfig({ config, setLocalConfig, saveConfig, featureId, featureConfig }: FeatureConfigProps) {
+  const { t } = useTranslation();
+
   return (
     <>
       <p className="text-sm text-muted-foreground">
-        Custom Commands laufen als Slash-Commands.
-        Konfiguriere die Antworten in den Bot-Einstellungen.
+        {t('botControl.features.customCommands.description')}
       </p>
       <div className="space-y-2">
-        <Label className="text-foreground">Befehle (JSON Format)</Label>
+        <Label className="text-foreground">{t('botControl.features.customCommands.commandsLabel')}</Label>
         <Textarea
           placeholder='[{"command":"ping","response":"Pong! 🏓"}]'
           value={typeof config.commands === 'string' ? config.commands : JSON.stringify(config.commands || [], null, 2)}
@@ -21,7 +23,7 @@ export function CustomCommandsConfig({ config, setLocalConfig, saveConfig, featu
         />
       </div>
       <Button onClick={() => saveConfig(featureId, 'custom-commands', featureConfig)} variant="secondary">
-        Speichern
+        {t('botControl.features.save')}
       </Button>
     </>
   );

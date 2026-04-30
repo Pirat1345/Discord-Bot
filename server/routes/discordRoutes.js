@@ -166,7 +166,7 @@ router.get('/bot/profile', requireAuth, requirePermission('read'), async (req, r
   const settings = db.settingsByUser[userId];
 
   if (!settings) {
-    return res.status(404).json({ error: 'Bot-Einstellungen nicht gefunden.' });
+    return res.status(404).json({ error: 'Bot settings not found.' });
   }
 
   const runtimeProfile = getBotRuntimeProfileForUser(userId);
@@ -231,7 +231,7 @@ router.patch('/bot/profile', requireAuth, requirePermission('write'), async (req
   const settings = db.settingsByUser[userId];
 
   if (!settings) {
-    return res.status(404).json({ error: 'Bot-Einstellungen nicht gefunden.' });
+    return res.status(404).json({ error: 'Bot settings not found.' });
   }
 
   if (description !== undefined) {
@@ -245,14 +245,14 @@ router.patch('/bot/profile', requireAuth, requirePermission('write'), async (req
 
   if (hasRemoteProfileUpdate) {
     if (!effectiveBotToken) {
-      return res.status(400).json({ error: 'Kein Bot-Token gesetzt.' });
+      return res.status(400).json({ error: 'No bot token set.' });
     }
 
     const payload = {};
     if (username !== undefined) {
       const nextUsername = String(username || '').trim();
       if (nextUsername.length < 2 || nextUsername.length > 32) {
-        return res.status(400).json({ error: 'Bot-Name muss zwischen 2 und 32 Zeichen lang sein.' });
+        return res.status(400).json({ error: 'Bot name must be between 2 and 32 characters.' });
       }
       payload.username = nextUsername;
     }
@@ -274,7 +274,7 @@ router.patch('/bot/profile', requireAuth, requirePermission('write'), async (req
 
     if (!response.ok) {
       const text = await response.text();
-      return res.status(response.status).json({ error: `Discord API Fehler: ${text}` });
+      return res.status(response.status).json({ error: `Discord API error: ${text}` });
     }
   }
 
@@ -290,7 +290,7 @@ router.patch('/bot/presence', requireAuth, requirePermission('write'), async (re
   const settings = db.settingsByUser[userId];
 
   if (!settings) {
-    return res.status(404).json({ error: 'Bot-Einstellungen nicht gefunden.' });
+    return res.status(404).json({ error: 'Bot settings not found.' });
   }
 
   settings.bot_status = sanitizeStatus(status || settings.bot_status || 'online');
@@ -308,7 +308,7 @@ router.patch('/bot/presence', requireAuth, requirePermission('write'), async (re
     } catch (error) {
       await writeDb(db);
       return res.status(400).json({
-        error: error instanceof Error ? error.message : 'Status konnte nicht gesetzt werden.',
+        error: error instanceof Error ? error.message : 'Status could not be set.',
       });
     }
   }
@@ -351,14 +351,14 @@ router.get('/servers/:guildId/config', requireAuth, requirePermission('read'), a
   const guildId = String(req.params.guildId || '').trim();
 
   if (!guildId) {
-    return res.status(400).json({ error: 'Ungültige Server-ID.' });
+    return res.status(400).json({ error: 'Invalid server ID.' });
   }
 
   const db = await readDb();
   const target = await resolveServerForUserLenient(db, userId, guildId);
 
   if (!target) {
-    return res.status(404).json({ error: 'Server nicht gefunden. Stelle sicher, dass der Bot online ist.' });
+    return res.status(404).json({ error: 'Server not found. Make sure the bot is online.' });
   }
 
   const { config: guildConfig, created, updated } = ensureGuildConfig(db, userId, guildId);
@@ -378,12 +378,12 @@ router.get('/servers/:guildId/stats', requireAuth, requirePermission('read'), as
   const guildId = String(req.params.guildId || '').trim();
 
   if (!guildId) {
-    return res.status(400).json({ error: 'Ungültige Server-ID.' });
+    return res.status(400).json({ error: 'Invalid server ID.' });
   }
 
   const stats = await getGuildStatsForUser(userId, guildId);
   if (!stats) {
-    return res.status(404).json({ error: 'Server nicht gefunden. Stelle sicher, dass der Bot online ist.' });
+    return res.status(404).json({ error: 'Server not found. Make sure the bot is online.' });
   }
 
   return res.json(stats);
@@ -395,14 +395,14 @@ router.patch('/servers/:guildId/settings', requireAuth, requirePermission('write
   const updates = req.body || {};
 
   if (!guildId) {
-    return res.status(400).json({ error: 'Ungültige Server-ID.' });
+    return res.status(400).json({ error: 'Invalid server ID.' });
   }
 
   const db = await readDb();
   const target = await resolveServerForUserLenient(db, userId, guildId);
 
   if (!target) {
-    return res.status(404).json({ error: 'Server nicht gefunden. Stelle sicher, dass der Bot online ist.' });
+    return res.status(404).json({ error: 'Server not found. Make sure the bot is online.' });
   }
 
   const { config: guildConfig } = ensureGuildConfig(db, userId, guildId);
@@ -426,21 +426,21 @@ router.patch('/servers/:guildId/features/:featureId', requireAuth, requirePermis
   const updates = req.body || {};
 
   if (!guildId || !featureId) {
-    return res.status(400).json({ error: 'Ungültige Anfrage.' });
+    return res.status(400).json({ error: 'Invalid request.' });
   }
 
   const db = await readDb();
   const target = await resolveServerForUserLenient(db, userId, guildId);
 
   if (!target) {
-    return res.status(404).json({ error: 'Server nicht gefunden. Stelle sicher, dass der Bot online ist.' });
+    return res.status(404).json({ error: 'Server not found. Make sure the bot is online.' });
   }
 
   const { config: guildConfig } = ensureGuildConfig(db, userId, guildId);
   const feature = guildConfig.features.find((entry) => entry.id === featureId);
 
   if (!feature) {
-    return res.status(404).json({ error: 'Feature nicht gefunden.' });
+    return res.status(404).json({ error: 'Feature not found.' });
   }
 
   const beforeConfig = feature.feature_key === 'counting' ? normalizeCountingConfig(feature.config) : null;
@@ -486,28 +486,28 @@ router.post('/servers/:guildId/cleanup', requireAuth, requirePermission('write')
   const settings = db.settingsByUser[userId];
 
   if (!guildId) {
-    return res.status(400).json({ error: 'Ungültige Server-ID.' });
+    return res.status(400).json({ error: 'Invalid server ID.' });
   }
 
   if (!settings) {
-    return res.status(404).json({ error: 'Bot-Einstellungen nicht gefunden.' });
+    return res.status(404).json({ error: 'Bot settings not found.' });
   }
 
   const target = await resolveServerForUserLenient(db, userId, guildId);
   if (!target) {
-    return res.status(404).json({ error: 'Server nicht gefunden.' });
+    return res.status(404).json({ error: 'Server not found.' });
   }
 
   const token = getEffectiveBotToken(settings);
   if (!token) {
-    return res.status(400).json({ error: 'Kein Bot-Token gesetzt.' });
+    return res.status(400).json({ error: 'No bot token set.' });
   }
 
   try {
     const result = await cleanupGuildByRest(guildId, token);
     return res.json({ ok: true, ...result });
   } catch (error) {
-    return res.status(400).json({ error: error instanceof Error ? error.message : 'Cleanup fehlgeschlagen.' });
+    return res.status(400).json({ error: error instanceof Error ? error.message : 'Cleanup failed.' });
   }
 });
 
@@ -516,18 +516,18 @@ router.post('/servers/:guildId/welcome-test', requireAuth, requirePermission('us
   const guildId = String(req.params.guildId || '').trim();
 
   if (!guildId) {
-    return res.status(400).json({ error: 'Ungültige Server-ID.' });
+    return res.status(400).json({ error: 'Invalid server ID.' });
   }
 
   const db = await readDb();
   const target = await resolveServerForUserLenient(db, userId, guildId);
   if (!target) {
-    return res.status(404).json({ error: 'Server nicht gefunden.' });
+    return res.status(404).json({ error: 'Server not found.' });
   }
 
   const activeClient = getActiveClientForUser(userId);
   if (!activeClient) {
-    return res.status(400).json({ error: 'Bot ist offline. Starte zuerst den Bot.' });
+    return res.status(400).json({ error: 'Bot is offline. Start the bot first.' });
   }
 
   try {
@@ -535,13 +535,13 @@ router.post('/servers/:guildId/welcome-test', requireAuth, requirePermission('us
     const result = await sendWelcomeTestForGuild({ userId, guild });
 
     if (!result?.sent) {
-      return res.status(400).json({ error: result?.reason || 'Welcome-Test konnte nicht gesendet werden.' });
+      return res.status(400).json({ error: result?.reason || 'Welcome test could not be sent.' });
     }
 
     return res.json({ ok: true, channel_id: result.channelId || null });
   } catch (error) {
     return res.status(500).json({
-      error: error instanceof Error ? error.message : 'Welcome-Test konnte nicht gesendet werden.',
+      error: error instanceof Error ? error.message : 'Welcome test could not be sent.',
     });
   }
 });
@@ -551,18 +551,18 @@ router.post('/servers/:guildId/free-games-test', requireAuth, requirePermission(
   const guildId = String(req.params.guildId || '').trim();
 
   if (!guildId) {
-    return res.status(400).json({ error: 'Ungültige Server-ID.' });
+    return res.status(400).json({ error: 'Invalid server ID.' });
   }
 
   const db = await readDb();
   const target = await resolveServerForUserLenient(db, userId, guildId);
   if (!target) {
-    return res.status(404).json({ error: 'Server nicht gefunden.' });
+    return res.status(404).json({ error: 'Server not found.' });
   }
 
   const activeClient = getActiveClientForUser(userId);
   if (!activeClient) {
-    return res.status(400).json({ error: 'Bot ist offline. Starte zuerst den Bot.' });
+    return res.status(400).json({ error: 'Bot is offline. Start the bot first.' });
   }
 
   try {
@@ -570,13 +570,13 @@ router.post('/servers/:guildId/free-games-test', requireAuth, requirePermission(
     const result = await postFreeGamesForGuild({ userId, guild });
 
     if (!result?.sent) {
-      return res.status(400).json({ error: result?.reason || 'Free Games konnten nicht gesendet werden.' });
+      return res.status(400).json({ error: result?.reason || 'Free games could not be sent.' });
     }
 
     return res.json({ ok: true, count: result.count, channel_id: result.channelId || null });
   } catch (error) {
     return res.status(500).json({
-      error: error instanceof Error ? error.message : 'Free Games konnten nicht gesendet werden.',
+      error: error instanceof Error ? error.message : 'Free games could not be sent.',
     });
   }
 });
@@ -586,18 +586,18 @@ router.post('/servers/:guildId/minecraft-status-test', requireAuth, requirePermi
   const guildId = String(req.params.guildId || '').trim();
 
   if (!guildId) {
-    return res.status(400).json({ error: 'Ungültige Server-ID.' });
+    return res.status(400).json({ error: 'Invalid server ID.' });
   }
 
   const db = await readDb();
   const target = await resolveServerForUserLenient(db, userId, guildId);
   if (!target) {
-    return res.status(404).json({ error: 'Server nicht gefunden.' });
+    return res.status(404).json({ error: 'Server not found.' });
   }
 
   const activeClient = getActiveClientForUser(userId);
   if (!activeClient) {
-    return res.status(400).json({ error: 'Bot ist offline. Starte zuerst den Bot.' });
+    return res.status(400).json({ error: 'Bot is offline. Start the bot first.' });
   }
 
   try {
@@ -605,13 +605,13 @@ router.post('/servers/:guildId/minecraft-status-test', requireAuth, requirePermi
     const result = await postMinecraftStatusForGuild({ userId, guild });
 
     if (!result?.sent) {
-      return res.status(400).json({ error: result?.reason || 'Minecraft Status konnte nicht gesendet werden.' });
+      return res.status(400).json({ error: result?.reason || 'Minecraft status could not be sent.' });
     }
 
     return res.json({ ok: true });
   } catch (error) {
     return res.status(500).json({
-      error: error instanceof Error ? error.message : 'Minecraft Status konnte nicht gesendet werden.',
+      error: error instanceof Error ? error.message : 'Minecraft status could not be sent.',
     });
   }
 });
@@ -623,7 +623,7 @@ router.post('/minecraft-status-preview', requireAuth, requirePermission('read'),
   const ed = String(edition || 'java').trim();
 
   if (!address) {
-    return res.status(400).json({ error: 'Server-Adresse ist erforderlich.' });
+    return res.status(400).json({ error: 'Server address is required.' });
   }
 
   try {
@@ -631,7 +631,7 @@ router.post('/minecraft-status-preview', requireAuth, requirePermission('read'),
     return res.json(data);
   } catch (error) {
     return res.status(500).json({
-      error: error instanceof Error ? error.message : 'Server konnte nicht erreicht werden.',
+      error: error instanceof Error ? error.message : 'Server could not be reached.',
     });
   }
 });
@@ -641,7 +641,7 @@ router.post('/send-message', requireAuth, requirePermission('use'), async (req, 
   const userId = req.session.userId;
 
   if (!channelId || !message) {
-    return res.status(400).json({ error: 'channelId und message sind erforderlich.' });
+    return res.status(400).json({ error: 'channelId and message are required.' });
   }
 
   const db = await readDb();
@@ -649,7 +649,7 @@ router.post('/send-message', requireAuth, requirePermission('use'), async (req, 
   const effectiveBotToken = String(userSettings?.bot_token || '').trim() || DISCORD_BOT_TOKEN;
 
   if (!effectiveBotToken) {
-    return res.status(400).json({ error: 'Kein Bot-Token gesetzt (Einstellungen oder DISCORD_BOT_TOKEN).' });
+    return res.status(400).json({ error: 'No bot token set (settings or DISCORD_BOT_TOKEN).' });
   }
 
   try {
@@ -672,7 +672,7 @@ router.post('/send-message', requireAuth, requirePermission('use'), async (req, 
   } catch (error) {
     const statusCode = Number(error?.statusCode);
     return res.status(Number.isFinite(statusCode) ? statusCode : 500).json({
-      error: error instanceof Error ? error.message : 'Unbekannter Serverfehler',
+      error: error instanceof Error ? error.message : 'Unknown server error',
     });
   }
 });
@@ -682,7 +682,7 @@ router.post('/send-dm', requireAuth, requirePermission('use'), async (req, res) 
   const userId = req.session.userId;
 
   if (!targetUserId || !message) {
-    return res.status(400).json({ error: 'userId und message sind erforderlich.' });
+    return res.status(400).json({ error: 'userId and message are required.' });
   }
 
   const db = await readDb();
@@ -690,7 +690,7 @@ router.post('/send-dm', requireAuth, requirePermission('use'), async (req, res) 
   const effectiveBotToken = getEffectiveBotToken(userSettings);
 
   if (!effectiveBotToken) {
-    return res.status(400).json({ error: 'Kein Bot-Token gesetzt (Einstellungen oder DISCORD_BOT_TOKEN).' });
+    return res.status(400).json({ error: 'No bot token set (settings or DISCORD_BOT_TOKEN).' });
   }
 
   try {
@@ -713,7 +713,7 @@ router.post('/send-dm', requireAuth, requirePermission('use'), async (req, res) 
   } catch (error) {
     const statusCode = Number(error?.statusCode);
     return res.status(Number.isFinite(statusCode) ? statusCode : 500).json({
-      error: error instanceof Error ? error.message : 'Unbekannter Serverfehler',
+      error: error instanceof Error ? error.message : 'Unknown server error',
     });
   }
 });
@@ -752,7 +752,7 @@ router.post('/dm/open', requireAuth, requirePermission('use'), async (req, res) 
   const { recipientId } = req.body || {};
 
   if (!recipientId) {
-    return res.status(400).json({ error: 'recipientId ist erforderlich.' });
+    return res.status(400).json({ error: 'recipientId is required.' });
   }
 
   const db = await readDb();
@@ -760,7 +760,7 @@ router.post('/dm/open', requireAuth, requirePermission('use'), async (req, res) 
   const effectiveBotToken = getEffectiveBotToken(userSettings);
 
   if (!effectiveBotToken) {
-    return res.status(400).json({ error: 'Kein Bot-Token gesetzt.' });
+    return res.status(400).json({ error: 'No bot token set.' });
   }
 
   try {
@@ -802,7 +802,7 @@ router.post('/dm/open', requireAuth, requirePermission('use'), async (req, res) 
       },
     });
   } catch (error) {
-    return res.status(500).json({ error: error instanceof Error ? error.message : 'Unbekannter Fehler' });
+    return res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
   }
 });
 
@@ -811,7 +811,7 @@ router.delete('/dm/channels/:channelId', requireAuth, requirePermission('use'), 
   const channelId = String(req.params.channelId || '').trim();
 
   if (!channelId) {
-    return res.status(400).json({ error: 'Ungültige Channel-ID.' });
+    return res.status(400).json({ error: 'Invalid channel ID.' });
   }
 
   const db = await readDb();
@@ -833,7 +833,7 @@ router.get('/dm/channels/:channelId/messages', requireAuth, requirePermission('r
   const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 50));
 
   if (!channelId) {
-    return res.status(400).json({ error: 'Ungültige Channel-ID.' });
+    return res.status(400).json({ error: 'Invalid channel ID.' });
   }
 
   const db = await readDb();
@@ -841,7 +841,7 @@ router.get('/dm/channels/:channelId/messages', requireAuth, requirePermission('r
   const effectiveBotToken = getEffectiveBotToken(userSettings);
 
   if (!effectiveBotToken) {
-    return res.status(400).json({ error: 'Kein Bot-Token gesetzt.' });
+    return res.status(400).json({ error: 'No bot token set.' });
   }
 
   try {
@@ -890,7 +890,7 @@ router.get('/dm/channels/:channelId/messages', requireAuth, requirePermission('r
 
     return res.json({ messages: mapped, bot_user_id: botUser?.id || null });
   } catch (error) {
-    return res.status(500).json({ error: error instanceof Error ? error.message : 'Unbekannter Fehler' });
+    return res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
   }
 });
 
@@ -899,7 +899,7 @@ router.get('/dm/user/:userId', requireAuth, requirePermission('read'), async (re
   const targetUserId = String(req.params.userId || '').trim();
 
   if (!targetUserId) {
-    return res.status(400).json({ error: 'Ungültige User-ID.' });
+    return res.status(400).json({ error: 'Invalid user ID.' });
   }
 
   const db = await readDb();
@@ -907,7 +907,7 @@ router.get('/dm/user/:userId', requireAuth, requirePermission('read'), async (re
   const effectiveBotToken = getEffectiveBotToken(userSettings);
 
   if (!effectiveBotToken) {
-    return res.status(400).json({ error: 'Kein Bot-Token gesetzt.' });
+    return res.status(400).json({ error: 'No bot token set.' });
   }
 
   try {
@@ -931,7 +931,7 @@ router.get('/dm/user/:userId', requireAuth, requirePermission('read'), async (re
       },
     });
   } catch (error) {
-    return res.status(500).json({ error: error instanceof Error ? error.message : 'Unbekannter Fehler' });
+    return res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
   }
 });
 
@@ -942,7 +942,7 @@ router.get('/servers/:guildId/music/status', requireAuth, requirePermission('rea
   const guildId = String(req.params.guildId || '').trim();
 
   if (!guildId) {
-    return res.status(400).json({ error: 'Ungültige Server-ID.' });
+    return res.status(400).json({ error: 'Invalid server ID.' });
   }
 
   const status = getMusicStatusForGuild(userId, guildId);
@@ -954,7 +954,7 @@ router.get('/servers/:guildId/music/queue', requireAuth, requirePermission('read
   const guildId = String(req.params.guildId || '').trim();
 
   if (!guildId) {
-    return res.status(400).json({ error: 'Ungültige Server-ID.' });
+    return res.status(400).json({ error: 'Invalid server ID.' });
   }
 
   const queue = getQueue(userId, guildId);
@@ -967,18 +967,18 @@ router.post('/servers/:guildId/music/play', requireAuth, requirePermission('use'
   const { url } = req.body || {};
 
   if (!guildId) {
-    return res.status(400).json({ error: 'Ungültige Server-ID.' });
+    return res.status(400).json({ error: 'Invalid server ID.' });
   }
 
   if (!url || typeof url !== 'string') {
-    return res.status(400).json({ error: 'Bitte gib eine URL an.' });
+    return res.status(400).json({ error: 'Please provide a URL.' });
   }
 
   try {
     const result = await addToQueue(userId, guildId, url.trim());
     return res.json({ ok: true, ...result });
   } catch (error) {
-    return res.status(400).json({ error: error instanceof Error ? error.message : 'Fehler beim Hinzufügen zur Warteschlange.' });
+    return res.status(400).json({ error: error instanceof Error ? error.message : 'Error adding to queue.' });
   }
 });
 
@@ -987,14 +987,14 @@ router.post('/servers/:guildId/music/skip', requireAuth, requirePermission('use'
   const guildId = String(req.params.guildId || '').trim();
 
   if (!guildId) {
-    return res.status(400).json({ error: 'Ungültige Server-ID.' });
+    return res.status(400).json({ error: 'Invalid server ID.' });
   }
 
   try {
     const result = skipSong(userId, guildId);
     return res.json({ ok: true, ...result });
   } catch (error) {
-    return res.status(400).json({ error: error instanceof Error ? error.message : 'Skip fehlgeschlagen.' });
+    return res.status(400).json({ error: error instanceof Error ? error.message : 'Skip failed.' });
   }
 });
 
@@ -1003,14 +1003,14 @@ router.post('/servers/:guildId/music/stop', requireAuth, requirePermission('use'
   const guildId = String(req.params.guildId || '').trim();
 
   if (!guildId) {
-    return res.status(400).json({ error: 'Ungültige Server-ID.' });
+    return res.status(400).json({ error: 'Invalid server ID.' });
   }
 
   try {
     const result = stopPlayback(userId, guildId);
     return res.json({ ok: true, ...result });
   } catch (error) {
-    return res.status(400).json({ error: error instanceof Error ? error.message : 'Stoppen fehlgeschlagen.' });
+    return res.status(400).json({ error: error instanceof Error ? error.message : 'Stop failed.' });
   }
 });
 

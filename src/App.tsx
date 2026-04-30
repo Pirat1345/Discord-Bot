@@ -14,9 +14,10 @@ import {
   SettingsConfigurationDiscord,
   SettingsConfigurationGeneral,
   SettingsHome,
+  SettingsLanguage,
   SettingsProfile,
   SettingsUsers,
-} from "@/pages/SettingsPages";
+} from "@/pages/settings/index";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
               <Route path="/settings/configuration" element={<Navigate to="/settings/configuration/general" replace />} />
               <Route path="/settings/configuration/general" element={<SettingsConfigurationGeneral />} />
               <Route path="/settings/configuration/discord" element={<SettingsConfigurationDiscord />} />
+              <Route path="/settings/language" element={<SettingsLanguage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

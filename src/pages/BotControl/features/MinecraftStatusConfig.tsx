@@ -6,11 +6,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, Send, Search } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 import * as botApi from '@/lib/botApi';
 import type { FeatureConfigProps } from '../types';
 
 export function MinecraftStatusConfig({ config, setLocalConfig, saveConfig, featureId, featureConfig, selectedGuildId, showCopyableError }: FeatureConfigProps) {
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const sendMinecraftStatusTest = useMutation({
     mutationFn: (guildId: string) => botApi.sendMinecraftStatusTest(guildId),
@@ -32,11 +34,11 @@ export function MinecraftStatusConfig({ config, setLocalConfig, saveConfig, feat
           className="bg-secondary border-border text-foreground placeholder:text-muted-foreground"
         />
         <p className="text-xs text-muted-foreground">
-          Der Channel, in den der Minecraft Server Status gepostet wird.
+          {t('botControl.features.minecraftStatus.channelHint')}
         </p>
       </div>
       <div className="space-y-2">
-        <Label className="text-foreground">Server Adresse</Label>
+        <Label className="text-foreground">{t('botControl.features.minecraftStatus.serverAddress')}</Label>
         <Input
           placeholder="z.B. mc.hypixel.net oder 192.168.1.100"
           value={config.serverAddress || ''}
@@ -46,7 +48,7 @@ export function MinecraftStatusConfig({ config, setLocalConfig, saveConfig, feat
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label className="text-foreground">Port (optional)</Label>
+          <Label className="text-foreground">{t('botControl.features.minecraftStatus.port')}</Label>
           <Input
             placeholder="25565"
             value={config.serverPort || ''}
@@ -55,7 +57,7 @@ export function MinecraftStatusConfig({ config, setLocalConfig, saveConfig, feat
           />
         </div>
         <div className="space-y-2">
-          <Label className="text-foreground">Edition</Label>
+          <Label className="text-foreground">{t('botControl.features.minecraftStatus.edition')}</Label>
           <Select
             value={config.edition || 'java'}
             onValueChange={(v) => setLocalConfig('minecraft-status', 'edition', v)}
@@ -75,11 +77,11 @@ export function MinecraftStatusConfig({ config, setLocalConfig, saveConfig, feat
           checked={config.autoPost === 'true'}
           onCheckedChange={(checked) => setLocalConfig('minecraft-status', 'autoPost', checked ? 'true' : 'false')}
         />
-        <Label className="text-foreground">Automatisch posten</Label>
+        <Label className="text-foreground">{t('botControl.features.minecraftStatus.autoPost')}</Label>
       </div>
       {config.autoPost === 'true' && (
         <div className="space-y-2">
-          <Label className="text-foreground">Intervall (Minuten)</Label>
+          <Label className="text-foreground">{t('botControl.features.minecraftStatus.intervalLabel')}</Label>
           <Input
             type="number"
             min={1}
@@ -91,7 +93,7 @@ export function MinecraftStatusConfig({ config, setLocalConfig, saveConfig, feat
             className="bg-secondary border-border text-foreground placeholder:text-muted-foreground w-32"
           />
           <p className="text-xs text-muted-foreground">
-            Wie oft der Status automatisch gepostet wird (1–1440 Minuten).
+            {t('botControl.features.minecraftStatus.intervalHint')}
           </p>
         </div>
       )}
@@ -99,15 +101,15 @@ export function MinecraftStatusConfig({ config, setLocalConfig, saveConfig, feat
       {mcPreview.data && (
         <div className="rounded-md border border-border bg-card p-3 text-sm space-y-1">
           <p className="font-semibold text-foreground">
-            {mcPreview.data.online ? '🟩 Server Online' : '🟥 Server Offline'}
+            {mcPreview.data.online ? t('botControl.features.minecraftStatus.online') : t('botControl.features.minecraftStatus.offline')}
           </p>
           {mcPreview.data.online && (
             <>
               <p className="text-muted-foreground">
-                Version: <span className="font-semibold text-foreground">{mcPreview.data.version?.name_clean || 'Unbekannt'}</span>
+                Version: <span className="font-semibold text-foreground">{mcPreview.data.version?.name_clean || t('botControl.features.minecraftStatus.unknown')}</span>
               </p>
               <p className="text-muted-foreground">
-                Spieler: <span className="font-semibold text-foreground">{mcPreview.data.players?.online ?? 0} / {mcPreview.data.players?.max ?? 0}</span>
+                {t('botControl.features.minecraftStatus.players')} <span className="font-semibold text-foreground">{mcPreview.data.players?.online ?? 0} / {mcPreview.data.players?.max ?? 0}</span>
               </p>
               {mcPreview.data.motd?.clean && (
                 <p className="text-muted-foreground">
@@ -126,7 +128,7 @@ export function MinecraftStatusConfig({ config, setLocalConfig, saveConfig, feat
 
       <div className="flex flex-wrap gap-2">
         <Button onClick={() => saveConfig(featureId, 'minecraft-status', featureConfig)} variant="secondary">
-          Speichern
+          {t('botControl.features.save')}
         </Button>
         <Button
           variant="secondary"
@@ -139,13 +141,13 @@ export function MinecraftStatusConfig({ config, setLocalConfig, saveConfig, feat
                 edition: config.edition || 'java',
               });
             } catch (error) {
-              const msg = error instanceof Error ? error.message : 'Server konnte nicht erreicht werden.';
-              showCopyableError('Fehler', msg);
+              const msg = error instanceof Error ? error.message : t('botControl.features.minecraftStatus.previewError');
+              showCopyableError(t('common.error'), msg);
             }
           }}
         >
           {mcPreview.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Search className="h-4 w-4 mr-2" />}
-          Vorschau
+          {t('botControl.features.minecraftStatus.preview')}
         </Button>
         <Button
           variant="secondary"
@@ -154,15 +156,15 @@ export function MinecraftStatusConfig({ config, setLocalConfig, saveConfig, feat
             if (!selectedGuildId) return;
             try {
               await sendMinecraftStatusTest.mutateAsync(selectedGuildId);
-              toast({ title: 'Minecraft Status gepostet' });
+              toast({ title: t('botControl.features.minecraftStatus.posted') });
             } catch (error) {
-              const msg = error instanceof Error ? error.message : 'Status konnte nicht gesendet werden.';
-              showCopyableError('Fehler', msg);
+              const msg = error instanceof Error ? error.message : t('botControl.features.minecraftStatus.postError');
+              showCopyableError(t('common.error'), msg);
             }
           }}
         >
           {sendMinecraftStatusTest.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
-          Test senden
+          {t('botControl.features.minecraftStatus.testSend')}
         </Button>
       </div>
     </>

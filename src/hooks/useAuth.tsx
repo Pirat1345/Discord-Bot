@@ -1,5 +1,6 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { apiFetch } from '@/lib/apiClient';
+import { loadLanguagesFromServer, setLanguage } from '@/i18n';
 import type { LocalUser } from '@/types/api';
 
 interface AuthContextType {
@@ -37,6 +38,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!mounted) return;
         setUser(sessionData.user);
         setNeedsInitialSetup(statusData.needs_initial_setup);
+        if (sessionData.user) {
+          loadLanguagesFromServer().then(() => {
+            if (sessionData.user?.language) setLanguage(sessionData.user.language);
+          });
+        }
       })
       .catch(() => {
         if (!mounted) return;
@@ -58,6 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ username, password, totpCode }),
       });
       setUser(data.user);
+      loadLanguagesFromServer().then(() => {
+        if (data.user?.language) setLanguage(data.user.language);
+      });
       return { error: null };
     } catch (error) {
       const err = error as Error;

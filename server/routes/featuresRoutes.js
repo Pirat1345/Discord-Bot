@@ -28,7 +28,7 @@ router.patch('/:featureId', requireAuth, requirePermission('write'), async (req,
   const feature = features.find((f) => f.id === featureId);
 
   if (!feature) {
-    return res.status(404).json({ error: 'Feature nicht gefunden.' });
+    return res.status(404).json({ error: 'Feature not found.' });
   }
 
   Object.assign(feature, updates, { updated_at: new Date().toISOString() });

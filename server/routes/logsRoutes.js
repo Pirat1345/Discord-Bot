@@ -21,7 +21,7 @@ router.post('/', requireAuth, requirePermission('write'), async (req, res) => {
   const { level, message } = req.body || {};
 
   if (!level || !message) {
-    return res.status(400).json({ error: 'level und message sind erforderlich.' });
+    return res.status(400).json({ error: 'level and message are required.' });
   }
 
   const log = {

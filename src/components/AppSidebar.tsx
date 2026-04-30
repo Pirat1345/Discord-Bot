@@ -1,4 +1,5 @@
 import { LayoutDashboard, Bot, LogOut, Settings, Gamepad2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { DiscordIcon } from '@/components/icons/DiscordIcon';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { NavLink } from '@/components/NavLink';
@@ -32,12 +33,13 @@ import { getAppBranding } from '@/lib/botApi';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const navItems = [
-  { title: 'Dashboard', url: '/', icon: LayoutDashboard },
-  { title: 'Discord', url: '/discord', icon: DiscordIcon },
-  { title: 'Games', url: '/games', icon: Gamepad2 },
+  { titleKey: 'nav.dashboard', url: '/', icon: LayoutDashboard },
+  { titleKey: 'nav.discord', url: '/discord', icon: DiscordIcon },
+  { titleKey: 'nav.games', url: '/games', icon: Gamepad2 },
 ];
 
 export function AppSidebar() {
+  const { t } = useTranslation();
   const isMobile = useIsMobile();
   const { pathname } = useLocation();
   const isSettingsRoute = pathname.startsWith('/settings');
@@ -89,7 +91,7 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {navItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
+                  <SidebarMenuItem key={item.titleKey}>
                     <SidebarMenuButton asChild>
                       <NavLink
                         to={item.url}
@@ -98,7 +100,7 @@ export function AppSidebar() {
                         activeClassName="bg-sidebar-accent text-primary font-medium"
                       >
                         <item.icon className="mr-3 h-5 w-5" />
-                        <span>{item.title}</span>
+                        <span>{t(item.titleKey)}</span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -116,7 +118,7 @@ export function AppSidebar() {
                 <SidebarMenuButton
                   size="lg"
                   className="h-auto justify-start gap-3 px-3 py-3 text-sidebar-foreground hover:bg-sidebar-accent"
-                  tooltip={user?.username ? `Profil: ${user.username}` : 'Profil'}
+                  tooltip={user?.username ? t('appSidebar.profileOf', { username: user.username }) : t('appSidebar.profile')}
                 >
                   <Avatar className="h-10 w-10 border border-sidebar-border">
                     <AvatarImage src={avatarSrc} alt={user?.username ?? 'User'} />
@@ -127,7 +129,7 @@ export function AppSidebar() {
                       {user?.display_name ?? user?.username ?? 'User'}
                     </div>
                     <div className="truncate text-xs text-sidebar-foreground/60">
-                      {user?.role === 'admin' ? 'Administrator' : 'Benutzer'}
+                      {user?.role === 'admin' ? t('appSidebar.admin') : t('appSidebar.user')}
                     </div>
                   </div>
                 </SidebarMenuButton>
@@ -141,18 +143,18 @@ export function AppSidebar() {
                   <div className="min-w-0">
                     <div className="truncate font-semibold">{user?.display_name ?? user?.username ?? 'User'}</div>
                     <div className="truncate text-xs text-muted-foreground">
-                      {user?.role === 'admin' ? 'Administrator' : 'Benutzer'}
+                      {user?.role === 'admin' ? t('appSidebar.admin') : t('appSidebar.user')}
                     </div>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={() => navigate('/settings')}>
                   <Settings className="mr-2 h-4 w-4" />
-                  Einstellungen
+                  {t('appSidebar.settings')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => signOut()} className="text-destructive focus:text-destructive">
                   <LogOut className="mr-2 h-4 w-4" />
-                  Abmelden
+                  {t('appSidebar.signOut')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

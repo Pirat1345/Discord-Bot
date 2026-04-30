@@ -190,8 +190,8 @@ function normalizeJavaResponse(raw, host, port) {
   }
 
   const playerList = (raw.players?.sample || []).map((p) => ({
-    name_clean: p.name || 'Unbekannt',
-    name_raw: p.name || 'Unbekannt',
+    name_clean: p.name || 'Unknown',
+    name_raw: p.name || 'Unknown',
     uuid: p.id || '',
   }));
 
@@ -300,8 +300,8 @@ function parseBedrockResponse(buffer, host, port) {
     host,
     port,
     version: {
-      name_clean: version || 'Unbekannt',
-      name_raw: version || 'Unbekannt',
+      name_clean: version || 'Unknown',
+      name_raw: version || 'Unknown',
       protocol: parseInt(protocol, 10) || null,
     },
     players: {
@@ -381,12 +381,12 @@ function buildStatusEmbed(data, address, port, edition) {
       .setTimestamp();
   }
 
-  const version = data.version?.name_clean || data.version?.name_raw || 'Unbekannt';
+  const version = data.version?.name_clean || data.version?.name_raw || 'Unknown';
   const protocol = data.version?.protocol ?? '–';
   const playersOnline = data.players?.online ?? 0;
   const playersMax = data.players?.max ?? 0;
   const playerList = (data.players?.list || [])
-    .map((p) => p.name_clean || p.name_raw || 'Unbekannt')
+    .map((p) => p.name_clean || p.name_raw || 'Unknown')
     .filter(Boolean);
 
   let motd = '';
@@ -442,7 +442,7 @@ function buildStatusEmbed(data, address, port, edition) {
 async function postStatusToChannel(guild, channelId, data, address, port, edition) {
   const channel = await guild.channels.fetch(channelId).catch(() => null);
   if (!channel || typeof channel.send !== 'function') {
-    return { sent: false, reason: 'Channel konnte nicht gefunden werden oder ist nicht beschreibbar.' };
+    return { sent: false, reason: 'Channel could not be found or is not writable.' };
   }
 
   const embed = buildStatusEmbed(data, address, port, edition);
@@ -453,7 +453,7 @@ async function postStatusToChannel(guild, channelId, data, address, port, editio
 async function postMinecraftStatusForGuild({ userId, guild }) {
   const guildId = String(guild?.id || '').trim();
   if (!guildId) {
-    return { sent: false, reason: 'Ungültiger Serverkontext.' };
+    return { sent: false, reason: 'Invalid server context.' };
   }
 
   const db = await readDb();
@@ -469,7 +469,7 @@ async function postMinecraftStatusForGuild({ userId, guild }) {
   const edition = String(config.edition || 'java').trim();
 
   if (!channelId) {
-    return { sent: false, reason: 'Kein Channel für Minecraft Status gesetzt.' };
+    return { sent: false, reason: 'No channel set for Minecraft status.' };
   }
   if (!serverAddress) {
     return { sent: false, reason: 'Keine Server-Adresse gesetzt.' };
@@ -532,7 +532,7 @@ async function autoPostForGuild(getActiveClientsCallback, userId, guildId) {
     await postStatusToChannel(guild, channelId, data, serverAddress, serverPort, edition);
     console.log(`[minecraft-status] Auto-Post: Status an ${guildId} gesendet.`);
   } catch (err) {
-    console.error(`[minecraft-status] Auto-Post Fehler für Guild ${guildId}:`, err);
+    console.error(`[minecraft-status] Auto-post error for guild ${guildId}:`, err);
   }
 }
 

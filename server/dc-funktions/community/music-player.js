@@ -85,21 +85,21 @@ function getSongInfo(url, isPlaylist = false) {
 
     proc.on('close', (code) => {
       if (code !== 0) {
-        return reject(new Error(stderr || 'yt-dlp fehlgeschlagen'));
+        return reject(new Error(stderr || 'yt-dlp failed'));
       }
 
       const songs = stdout.trim().split('\n')
         .filter(Boolean)
         .map((line) => {
           const [title, songUrl] = line.split('\t');
-          return { title: title || 'Unbekannt', url: songUrl || url };
+          return { title: title || 'Unknown', url: songUrl || url };
         });
 
       resolve(songs);
     });
 
     proc.on('error', () => {
-      reject(new Error('yt-dlp nicht gefunden! Bitte installiere yt-dlp: https://github.com/yt-dlp/yt-dlp'));
+      reject(new Error('yt-dlp not found! Please install yt-dlp: https://github.com/yt-dlp/yt-dlp'));
     });
   });
 }
@@ -125,12 +125,12 @@ function getDirectUrl(url) {
       if (code === 0 && stdout.trim()) {
         resolve(stdout.trim().split('\n')[0]);
       } else {
-        reject(new Error(stderr || 'yt-dlp fehlgeschlagen'));
+        reject(new Error(stderr || 'yt-dlp failed'));
       }
     });
 
     proc.on('error', () => {
-      reject(new Error('yt-dlp nicht gefunden!'));
+      reject(new Error('yt-dlp not found!'));
     });
   });
 }
@@ -251,12 +251,12 @@ async function addToQueue(userId, guildId, url) {
   const { getActiveClientForUser } = require('../../services/botService');
   const client = getActiveClientForUser(userId);
   if (!client) {
-    throw new Error('Bot ist offline. Starte zuerst den Bot.');
+    throw new Error('Bot is offline. Start the bot first.');
   }
 
   const guild = await client.guilds.fetch(guildId);
   if (!guild) {
-    throw new Error('Server nicht gefunden.');
+    throw new Error('Server not found.');
   }
 
   // Find a voice channel with non-bot members
@@ -271,14 +271,14 @@ async function addToQueue(userId, guildId, url) {
   }
 
   if (!targetChannel) {
-    throw new Error('Kein Voice-Channel mit Mitgliedern gefunden. Jemand muss in einem Voice-Channel sein.');
+    throw new Error('No voice channel with members found. Someone must be in a voice channel.');
   }
 
   const isPlaylist = url.includes('list=');
   const songs = await getSongInfo(url, isPlaylist);
 
   if (songs.length === 0) {
-    throw new Error('Keine Songs gefunden.');
+    throw new Error('No songs found.');
   }
 
   let state = getState(userId, guildId);
@@ -305,10 +305,10 @@ async function addToQueue(userId, guildId, url) {
 function skipSong(userId, guildId) {
   const state = getState(userId, guildId);
   if (!state || !state.currentPlayer || state.currentPlayer.state.status === AudioPlayerStatus.Idle) {
-    throw new Error('Es wird nichts abgespielt.');
+    throw new Error('Nothing is playing.');
   }
 
-  const skipped = state.nowPlaying?.title || 'Unbekannt';
+  const skipped = state.nowPlaying?.title || 'Unknown';
   state.currentPlayer.stop(); // triggers Idle → playNext()
   return { skipped };
 }
@@ -316,7 +316,7 @@ function skipSong(userId, guildId) {
 function stopPlayback(userId, guildId) {
   const state = getState(userId, guildId);
   if (!state) {
-    throw new Error('Es wird nichts abgespielt.');
+    throw new Error('Nothing is playing.');
   }
 
   const wasPlaying = state.nowPlaying?.title || null;
@@ -386,7 +386,7 @@ async function handleMessageCreate({ userId, message }) {
   try {
     await _handleMessageCreateInner(userId, message);
   } catch (error) {
-    console.error('[music-player] handleMessageCreate Fehler:', error instanceof Error ? error.message : error);
+    console.error('[music-player] handleMessageCreate error:', error instanceof Error ? error.message : error);
   }
 }
 
@@ -414,23 +414,23 @@ async function _handleMessageCreateInner(userId, message) {
   if (cfg.cmdPlay && command === cfg.cmdPlay) {
     const url = args[1];
     if (!url) {
-      await message.reply(`❌ Bitte gib eine URL an!\nBeispiel: \`${prefix}${cfg.cmdPlay} https://www.youtube.com/watch?v=dQw4w9WgXcQ\``);
+      await message.reply(`❌ Please provide a URL!\nExample: \`${prefix}${cfg.cmdPlay} https://www.youtube.com/watch?v=dQw4w9WgXcQ\``);
       return;
     }
 
     const voiceChannel = message.member?.voice?.channel;
     if (!voiceChannel) {
-      await message.reply('❌ Du musst in einem Sprachkanal sein!');
+      await message.reply('❌ You must be in a voice channel!');
       return;
     }
 
     const isPlaylist = url.includes('list=');
-    const statusMsg = await message.reply(isPlaylist ? '⏳ Playlist wird geladen...' : '⏳ Song wird geladen...');
+    const statusMsg = await message.reply(isPlaylist ? '⏳ Loading playlist...' : '⏳ Loading song...');
 
     try {
       const songs = await getSongInfo(url, isPlaylist);
       if (songs.length === 0) {
-        await statusMsg.edit('❌ Keine Songs gefunden.');
+        await statusMsg.edit('❌ No songs found.');
         return;
       }
 
@@ -444,16 +444,16 @@ async function _handleMessageCreateInner(userId, message) {
       }
 
       if (songs.length === 1) {
-        await statusMsg.edit(`🎵 **${songs[0].title}** zur Warteschlange hinzugefügt. (Position: ${state.queue.length})`);
+        await statusMsg.edit(`🎵 **${songs[0].title}** added to queue. (Position: ${state.queue.length})`);
       } else {
-        await statusMsg.edit(`📋 **${songs.length} Songs** aus der Playlist hinzugefügt.`);
+        await statusMsg.edit(`📋 **${songs.length} songs** added from playlist.`);
       }
 
       if (!state.currentPlayer || state.currentPlayer.state.status === AudioPlayerStatus.Idle) {
         await playNext(state, voiceChannel);
       }
     } catch (error) {
-      await statusMsg.edit(`❌ Fehler: ${error.message}`);
+      await statusMsg.edit(`❌ Error: ${error.message}`);
     }
     return;
   }
@@ -462,10 +462,10 @@ async function _handleMessageCreateInner(userId, message) {
   if (cfg.cmdSkip && command === cfg.cmdSkip) {
     const state = getState(userId, guildId);
     if (!state || !state.currentPlayer || state.currentPlayer.state.status === AudioPlayerStatus.Idle) {
-      await message.reply('❌ Es wird nichts abgespielt.');
+      await message.reply('❌ Nothing is playing.');
       return;
     }
-    await message.reply('⏭ Song wird übersprungen...');
+    await message.reply('⏭ Song skipping...');
     state.currentPlayer.stop();
     return;
   }
@@ -474,14 +474,14 @@ async function _handleMessageCreateInner(userId, message) {
   if (cfg.cmdStop && command === cfg.cmdStop) {
     const state = getState(userId, guildId);
     if (!state && !getState(userId, guildId)) {
-      await message.reply('❌ Es wird nichts abgespielt.');
+      await message.reply('❌ Nothing is playing.');
       return;
     }
     if (state) {
       state.queue.length = 0;
       deleteState(userId, guildId);
     }
-    await message.reply('⏹ Wiedergabe gestoppt und Warteschlange geleert.');
+    await message.reply('⏹ Playback stopped and queue cleared.');
     return;
   }
 
@@ -489,15 +489,15 @@ async function _handleMessageCreateInner(userId, message) {
   if (cfg.cmdQueue && (command === cfg.cmdQueue || command === 'q')) {
     const state = getState(userId, guildId);
     if (!state || state.queue.length === 0) {
-      await message.reply('📋 Die Warteschlange ist leer.');
+      await message.reply('📋 The queue is empty.');
       return;
     }
     const list = state.queue
       .slice(0, 15)
       .map((s, i) => `${i === 0 ? '▶' : `${i}.`} ${s.title}`)
       .join('\n');
-    const extra = state.queue.length > 15 ? `\n... und ${state.queue.length - 15} weitere` : '';
-    await message.reply(`📋 **Warteschlange** (${state.queue.length} Songs):\n${list}${extra}`);
+    const extra = state.queue.length > 15 ? `\n... and ${state.queue.length - 15} more` : '';
+    await message.reply(`📋 **Queue** (${state.queue.length} songs):\n${list}${extra}`);
     return;
   }
 }

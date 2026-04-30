@@ -60,7 +60,7 @@ async function announceCountingStarted(channel) {
     return;
   }
 
-  await channel.send('🎯 Counting ist jetzt aktiv! Start bei 1 und dann immer sauber hochzählen: 1, 2, 3, ...');
+  await channel.send('🎯 Counting is now active! Start at 1 and count up: 1, 2, 3, ...');
 }
 
 async function setCountingChannelForGuild({ userId, guildId, channelId, enable = true }) {
@@ -126,11 +126,11 @@ async function notifyReset(channel, reason) {
   }
 
   if (reason === 'same-user') {
-    await channel.send('Nicht zweimal hintereinander zählen. Neustart bei 1.');
+    await channel.send('Cannot count twice in a row. Restarting at 1.');
     return;
   }
 
-  await channel.send('Falsche Zahl. Neustart bei 1.');
+  await channel.send('Wrong number. Restarting at 1.');
 }
 
 async function reactSafe(message, emoji) {

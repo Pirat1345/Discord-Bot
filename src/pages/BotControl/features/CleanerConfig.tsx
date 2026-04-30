@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Trash2, AlertTriangle } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 import * as botApi from '@/lib/botApi';
 import type { FeatureConfigProps } from '../types';
 
@@ -11,6 +12,7 @@ interface Props extends Pick<FeatureConfigProps, 'selectedGuildId' | 'showCopyab
 
 export function CleanerConfig({ selectedGuildId, guildName, showCopyableError }: Props) {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const qc = useQueryClient();
 
   const cleanupGuild = useMutation({
@@ -28,10 +30,9 @@ export function CleanerConfig({ selectedGuildId, guildName, showCopyableError }:
         <div className="flex items-start gap-3">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
           <div className="space-y-1">
-            <p className="font-semibold">Achtung: Destruktive Aktion</p>
+            <p className="font-semibold">{t('botControl.features.cleaner.warningTitle')}</p>
             <p className="text-muted-foreground">
-              Dieser Cleaner löscht alle Kanäle, Kategorien und löschbaren Rollen auf dem ausgewählten Server.
-              Die Standardrolle @everyone bleibt bestehen.
+              {t('botControl.features.cleaner.warningText')}
             </p>
           </div>
         </div>
@@ -42,29 +43,27 @@ export function CleanerConfig({ selectedGuildId, guildName, showCopyableError }:
         onClick={async () => {
           if (!selectedGuildId) return;
 
-          const confirmed = window.confirm(
-            `Wirklich ALLES auf ${guildName} löschen? Kanäle, Kategorien und Rollen werden entfernt.`
-          );
+          const confirmed = window.confirm(t('botControl.features.cleaner.confirmDelete', { name: guildName }));
           if (!confirmed) return;
 
-          const typed = window.prompt(`Zur Bestätigung tippe den Servernamen exakt ein: ${guildName}`);
+          const typed = window.prompt(t('botControl.features.cleaner.confirmPrompt', { name: guildName }));
           if ((typed || '').trim() !== guildName.trim()) {
-            toast({ title: 'Abgebrochen', description: 'Servername stimmt nicht überein.', variant: 'destructive' });
+            toast({ title: t('botControl.features.cleaner.cancelled'), description: t('botControl.features.cleaner.nameMismatch'), variant: 'destructive' });
             return;
           }
 
           try {
             await cleanupGuild.mutateAsync(selectedGuildId);
-            toast({ title: 'Gelöscht', description: 'Der Server wurde geleert.' });
+            toast({ title: t('botControl.features.cleaner.deleted'), description: t('botControl.features.cleaner.deletedDesc') });
           } catch (error) {
-            const msg = error instanceof Error ? error.message : 'Cleaner fehlgeschlagen.';
-            showCopyableError('Fehler', msg);
+            const msg = error instanceof Error ? error.message : t('botControl.features.cleaner.deleteError');
+            showCopyableError(t('common.error'), msg);
           }
         }}
         disabled={cleanupGuild.isPending}
       >
         {cleanupGuild.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-        Server leeren
+        {t('botControl.features.cleaner.cleanButton')}
       </Button>
     </>
   );

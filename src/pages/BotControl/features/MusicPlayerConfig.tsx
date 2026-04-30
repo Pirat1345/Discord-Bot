@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2, Play, SkipForward, Square, ListMusic, Terminal } from 'lucide-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import * as botApi from '@/lib/botApi';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,6 +14,7 @@ import type { FeatureConfigProps } from '../types';
 export function MusicPlayerConfig({ config, setLocalConfig, saveConfig, featureId, featureConfig, selectedGuildId, showCopyableError }: FeatureConfigProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [musicUrl, setMusicUrl] = useState('');
 
   const { data: musicStatus, refetch: refetchMusicStatus } = useQuery({
@@ -60,7 +62,7 @@ export function MusicPlayerConfig({ config, setLocalConfig, saveConfig, featureI
         <p>
           Status:{' '}
           <span className={cn('font-semibold', isPlaying ? 'text-success' : 'text-foreground')}>
-            {isPlaying ? 'Spielt' : 'Gestoppt'}
+            {isPlaying ? t('botControl.features.musicPlayer.playing') : t('botControl.features.musicPlayer.stopped')}
           </span>
           {channelName && (
             <span className="text-muted-foreground"> in {channelName}</span>
@@ -68,26 +70,26 @@ export function MusicPlayerConfig({ config, setLocalConfig, saveConfig, featureI
         </p>
         {nowPlaying && (
           <p>
-            Aktueller Song:{' '}
+            {t('botControl.features.musicPlayer.currentSong')}{' '}
             <span className="font-semibold text-foreground">{nowPlaying.title}</span>
           </p>
         )}
-        <p>Warteschlange: <span className="font-semibold text-foreground">{queueItems.length} Song(s)</span></p>
-        <p className="text-xs">Benötigt <span className="font-semibold">yt-dlp</span> und <span className="font-semibold">ffmpeg</span> auf dem Server.</p>
+        <p>{t('botControl.features.musicPlayer.queue')} <span className="font-semibold text-foreground">{queueItems.length} {t('botControl.features.musicPlayer.songs')}</span></p>
+        <p className="text-xs">{t('botControl.features.musicPlayer.requirements')}</p>
       </div>
 
       {/* Discord Command Configuration */}
       <div className="rounded-md border border-border bg-card p-3 space-y-3">
         <div className="flex items-center gap-2">
           <Terminal className="h-4 w-4 text-primary" />
-          <Label className="text-foreground font-semibold">Discord-Befehle</Label>
+          <Label className="text-foreground font-semibold">{t('botControl.features.musicPlayer.discordCommands')}</Label>
         </div>
         <p className="text-xs text-muted-foreground">
-          Nutzer können den Music Player direkt im Discord-Chat steuern. Passe Prefix und Befehlsnamen an.
+          {t('botControl.features.musicPlayer.discordCommandsHint')}
         </p>
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-1.5">
-            <Label className="text-foreground text-xs">Prefix</Label>
+            <Label className="text-foreground text-xs">{t('botControl.features.musicPlayer.prefix')}</Label>
             <Input
               placeholder="!"
               value={cmdPrefix}
@@ -96,7 +98,7 @@ export function MusicPlayerConfig({ config, setLocalConfig, saveConfig, featureI
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-foreground text-xs">Play-Befehl</Label>
+            <Label className="text-foreground text-xs">{t('botControl.features.musicPlayer.playCmd')}</Label>
             <Input
               placeholder="play"
               value={cmdPlay}
@@ -105,7 +107,7 @@ export function MusicPlayerConfig({ config, setLocalConfig, saveConfig, featureI
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-foreground text-xs">Skip-Befehl</Label>
+            <Label className="text-foreground text-xs">{t('botControl.features.musicPlayer.skipCmd')}</Label>
             <Input
               placeholder="skip"
               value={cmdSkip}
@@ -114,7 +116,7 @@ export function MusicPlayerConfig({ config, setLocalConfig, saveConfig, featureI
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-foreground text-xs">Stop-Befehl</Label>
+            <Label className="text-foreground text-xs">{t('botControl.features.musicPlayer.stopCmd')}</Label>
             <Input
               placeholder="stop"
               value={cmdStop}
@@ -123,7 +125,7 @@ export function MusicPlayerConfig({ config, setLocalConfig, saveConfig, featureI
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-foreground text-xs">Queue-Befehl</Label>
+            <Label className="text-foreground text-xs">{t('botControl.features.musicPlayer.queueCmd')}</Label>
             <Input
               placeholder="queue"
               value={cmdQueue}
@@ -138,12 +140,12 @@ export function MusicPlayerConfig({ config, setLocalConfig, saveConfig, featureI
           </p>
         </div>
         <Button onClick={() => saveConfig(featureId, 'music-player', featureConfig)} variant="secondary" size="sm">
-          Befehle speichern
+          {t('botControl.features.musicPlayer.saveCommands')}
         </Button>
       </div>
 
       <div className="space-y-2">
-        <Label className="text-foreground">YouTube URL oder Playlist</Label>
+        <Label className="text-foreground">{t('botControl.features.musicPlayer.urlLabel')}</Label>
         <div className="flex gap-2">
           <Input
             placeholder="https://www.youtube.com/watch?v=..."
@@ -167,15 +169,15 @@ export function MusicPlayerConfig({ config, setLocalConfig, saveConfig, featureI
                   onSuccess: (data) => {
                     setMusicUrl('');
                     toast({
-                      title: 'Hinzugefügt',
+                      title: t('botControl.features.musicPlayer.added'),
                       description: data.added === 1
-                        ? `${data.songs[0]} zur Warteschlange hinzugefügt.`
-                        : `${data.added} Songs hinzugefügt.`,
+                        ? t('botControl.features.musicPlayer.addedSingle', { title: data.songs[0] })
+                        : t('botControl.features.musicPlayer.addedMultiple', { count: data.added }),
                     });
                   },
                   onError: (err) => {
-                    const msg = err instanceof Error ? err.message : 'Fehler';
-                    showCopyableError('Fehler', msg);
+                    const msg = err instanceof Error ? err.message : t('common.error');
+                    showCopyableError(t('common.error'), msg);
                   },
                 }
               );
@@ -183,7 +185,7 @@ export function MusicPlayerConfig({ config, setLocalConfig, saveConfig, featureI
             className="gap-2 shrink-0"
           >
             {musicPlayMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-            Abspielen
+            {t('botControl.features.musicPlayer.play')}
           </Button>
         </div>
       </div>
@@ -197,17 +199,17 @@ export function MusicPlayerConfig({ config, setLocalConfig, saveConfig, featureI
             if (!selectedGuildId) return;
             musicSkipMutation.mutate(selectedGuildId, {
               onSuccess: (data) => {
-                toast({ title: 'Übersprungen', description: `${data.skipped} wurde übersprungen.` });
+                toast({ title: t('botControl.features.musicPlayer.skipped'), description: t('botControl.features.musicPlayer.skippedDesc', { title: data.skipped }) });
               },
               onError: (err) => {
-                const msg = err instanceof Error ? err.message : 'Skip fehlgeschlagen.';
-                showCopyableError('Fehler', msg);
+                const msg = err instanceof Error ? err.message : t('botControl.features.musicPlayer.skipError');
+                showCopyableError(t('common.error'), msg);
               },
             });
           }}
         >
           {musicSkipMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <SkipForward className="h-4 w-4" />}
-          Überspringen
+          {t('botControl.features.musicPlayer.skip')}
         </Button>
         <Button
           variant="destructive"
@@ -217,17 +219,17 @@ export function MusicPlayerConfig({ config, setLocalConfig, saveConfig, featureI
             if (!selectedGuildId) return;
             musicStopMutation.mutate(selectedGuildId, {
               onSuccess: () => {
-                toast({ title: 'Gestoppt', description: 'Wiedergabe gestoppt und Warteschlange geleert.' });
+                toast({ title: t('botControl.features.musicPlayer.stoppedTitle'), description: t('botControl.features.musicPlayer.stoppedDesc') });
               },
               onError: (err) => {
-                const msg = err instanceof Error ? err.message : 'Stoppen fehlgeschlagen.';
-                showCopyableError('Fehler', msg);
+                const msg = err instanceof Error ? err.message : t('botControl.features.musicPlayer.stopError');
+                showCopyableError(t('common.error'), msg);
               },
             });
           }}
         >
           {musicStopMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Square className="h-4 w-4" />}
-          Stoppen
+          {t('botControl.features.musicPlayer.stop')}
         </Button>
       </div>
 
@@ -235,7 +237,7 @@ export function MusicPlayerConfig({ config, setLocalConfig, saveConfig, featureI
         <div className="space-y-2">
           <Label className="flex items-center gap-2 text-foreground">
             <ListMusic className="h-4 w-4" />
-            Warteschlange ({queueItems.length})
+            {t('botControl.features.musicPlayer.queueLabel')} ({queueItems.length})
           </Label>
           <div className="max-h-48 space-y-1 overflow-y-auto rounded-md border border-border bg-card p-2">
             {queueItems.slice(0, 20).map((item) => (
@@ -254,7 +256,7 @@ export function MusicPlayerConfig({ config, setLocalConfig, saveConfig, featureI
             ))}
             {queueItems.length > 20 && (
               <p className="px-2 py-1 text-xs text-muted-foreground">
-                ... und {queueItems.length - 20} weitere
+                ... {t('botControl.features.musicPlayer.moreItems', { count: queueItems.length - 20 })}
               </p>
             )}
           </div>

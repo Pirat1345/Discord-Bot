@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,6 +46,7 @@ export function ServerSection({
   setLocalConfigs,
 }: ServerSectionProps) {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const qc = useQueryClient();
   const [toolSearch, setToolSearch] = useState('');
@@ -126,10 +128,10 @@ export function ServerSection({
         delete next[scopedFeatureKey(featureKey)];
         return next;
       });
-      toast({ title: 'Gespeichert' });
+      toast({ title: t('botControl.server.configSaved') });
     } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Konfiguration konnte nicht gespeichert werden.';
-      showCopyableError('Fehler', msg);
+      const msg = error instanceof Error ? error.message : t('botControl.server.configSaveError');
+      showCopyableError(t('common.error'), msg);
     }
   };
 
@@ -142,8 +144,8 @@ export function ServerSection({
         updates: { enabled: !currentEnabled },
       });
     } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Feature konnte nicht geändert werden.';
-      showCopyableError('Fehler', msg);
+      const msg = error instanceof Error ? error.message : t('botControl.server.featureToggleError');
+      showCopyableError(t('common.error'), msg);
     }
   };
 
@@ -157,10 +159,10 @@ export function ServerSection({
           bot_profile_id: selectedConfig.settings.bot_profile_id || null,
         },
       });
-      toast({ title: 'Gespeichert', description: 'Server-Einstellungen wurden aktualisiert.' });
+      toast({ title: t('botControl.server.saved'), description: t('botControl.server.savedDescription') });
       await refetchConfig();
     } catch {
-      toast({ title: 'Fehler', description: 'Server-Einstellungen konnten nicht gespeichert werden.', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('botControl.server.saveError'), variant: 'destructive' });
     }
   };
 
@@ -186,13 +188,13 @@ export function ServerSection({
     const search = toolSearch.trim().toLowerCase();
     const filtered = activeFeatures.filter((feature) => {
       if (!search) return true;
-      const category = featureCategories[feature.feature_key] || 'Sonstiges';
+      const category = featureCategories[feature.feature_key] || 'Other';
       const haystack = [feature.name, feature.description, feature.feature_key, category].join(' ').toLowerCase();
       return haystack.includes(search);
     });
 
     const grouped = filtered.reduce<Record<string, BotFeature[]>>((acc, feature) => {
-      const category = featureCategories[feature.feature_key] || 'Sonstiges';
+      const category = featureCategories[feature.feature_key] || 'Other';
       if (!acc[category]) acc[category] = [];
       acc[category].push(feature);
       return acc;
@@ -204,11 +206,11 @@ export function ServerSection({
         const bIndex = categoryOrder.indexOf(b);
         const safeA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
         const safeB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
-        return safeA - safeB || a.localeCompare(b, 'de');
+        return safeA - safeB || a.localeCompare(b);
       })
       .map((category) => ({
         category,
-        features: grouped[category].sort((a, b) => a.name.localeCompare(b.name, 'de')),
+        features: grouped[category].sort((a, b) => a.name.localeCompare(b.name)),
       }));
   }, [activeFeatures, toolSearch]);
 
@@ -217,9 +219,9 @@ export function ServerSection({
       <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-foreground">Serverliste</CardTitle>
+            <CardTitle className="text-foreground">{t('botControl.server.listTitle')}</CardTitle>
             <CardDescription className="text-muted-foreground">
-              Wähle einen Discord-Server, um ihn separat zu konfigurieren.
+              {t('botControl.server.listDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -227,7 +229,7 @@ export function ServerSection({
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             ) : !servers?.length ? (
               <p className="text-sm text-muted-foreground">
-                Keine Server gefunden. Starte den Bot, damit die Serverliste geladen werden kann.
+                {t('botControl.server.noServers')}
               </p>
             ) : (
               servers.map((server) => (
@@ -246,7 +248,7 @@ export function ServerSection({
                     {server.icon_url ? (
                       <img
                         src={server.icon_url}
-                        alt={`Icon von ${server.name}`}
+                        alt={t('botControl.server.iconAlt', { name: server.name })}
                         className="h-6 w-6 rounded-full object-cover"
                       />
                     ) : (
@@ -259,11 +261,11 @@ export function ServerSection({
                       <div className="mt-1 flex flex-wrap gap-1">
                         {server.bot_profile_id ? (
                           <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] text-primary">
-                            Bot: {profiles.find((profile) => profile.id === server.bot_profile_id)?.name || 'Unbekannt'}
+                            Bot: {profiles.find((profile) => profile.id === server.bot_profile_id)?.name || t('botControl.server.unknownBot')}
                           </span>
                         ) : (
                           <span className="rounded-full border border-dashed border-border px-2 py-0.5 text-[11px] text-muted-foreground">
-                            Kein Bot zugewiesen
+                            {t('botControl.server.noBotAssigned')}
                           </span>
                         )}
                       </div>
@@ -280,23 +282,23 @@ export function ServerSection({
           {!selectedGuildId ? (
             <Card className="bg-card border-border">
               <CardContent className="py-8">
-                <p className="text-sm text-muted-foreground">Bitte links einen Server auswählen.</p>
+                <p className="text-sm text-muted-foreground">{t('botControl.server.selectServer')}</p>
               </CardContent>
             </Card>
           ) : configLoading || !selectedConfig ? (
             <Card className="bg-card border-border">
               <CardContent className="flex items-center gap-2 py-8 text-muted-foreground">
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Lade Server-Konfiguration...
+                {t('botControl.server.loadingConfig')}
               </CardContent>
             </Card>
           ) : (
             <>
               <Card className="bg-card border-border">
                 <CardHeader>
-                  <CardTitle className="text-foreground">Server-Einstellungen</CardTitle>
+                  <CardTitle className="text-foreground">{t('botControl.server.settingsTitle')}</CardTitle>
                   <CardDescription className="text-muted-foreground">
-                    Diese Einstellungen gelten nur für {selectedConfig.guild.name}.
+                    {t('botControl.server.settingsDescription', { name: selectedConfig.guild.name })}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -304,7 +306,7 @@ export function ServerSection({
                     {statsLoading ? (
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Lade Server-Statistiken...
+                        {t('botControl.server.loadingStats')}
                       </div>
                     ) : (
                       <div className="space-y-4">
@@ -312,7 +314,7 @@ export function ServerSection({
                           {selectedStats?.icon_url ? (
                             <img
                               src={selectedStats.icon_url}
-                              alt={`Icon von ${selectedStats.name}`}
+                              alt={t('botControl.server.iconAlt', { name: selectedStats.name })}
                               className="h-20 w-20 rounded-2xl object-cover"
                             />
                           ) : (
@@ -330,19 +332,19 @@ export function ServerSection({
 
                         <div className="grid gap-2 sm:grid-cols-3">
                           <div className="rounded-md border border-border bg-card px-3 py-2">
-                            <p className="text-xs uppercase text-muted-foreground">Online</p>
+                            <p className="text-xs uppercase text-muted-foreground">{t('botControl.server.online')}</p>
                             <p className="text-xl font-bold text-foreground">
                               {selectedStats?.online_members ?? '—'}
                             </p>
                           </div>
                           <div className="rounded-md border border-border bg-card px-3 py-2">
-                            <p className="text-xs uppercase text-muted-foreground">Offline</p>
+                            <p className="text-xs uppercase text-muted-foreground">{t('botControl.server.offline')}</p>
                             <p className="text-xl font-bold text-foreground">
                               {selectedStats?.offline_members ?? '—'}
                             </p>
                           </div>
                           <div className="rounded-md border border-border bg-card px-3 py-2">
-                            <p className="text-xs uppercase text-muted-foreground">Gesamt</p>
+                            <p className="text-xs uppercase text-muted-foreground">{t('botControl.server.total')}</p>
                             <p className="text-xl font-bold text-foreground">
                               {selectedStats?.total_members ?? '—'}
                             </p>
@@ -353,19 +355,19 @@ export function ServerSection({
                   </div>
 
                   <div className="rounded-md border border-border bg-card px-3 py-2 text-sm text-muted-foreground">
-                    Command Prefix ist global fest auf <span className="font-semibold text-foreground">/</span> gesetzt.
+                    {t('botControl.server.prefixHint')}
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-foreground">Zugewiesener Bot</Label>
+                    <Label className="text-foreground">{t('botControl.server.assignedBot')}</Label>
                     <Select
                       value={selectedConfig.settings.bot_profile_id || 'none'}
                       onValueChange={(value) => updateLocalGuildBotAssignment(value === 'none' ? '' : value)}
                     >
                       <SelectTrigger className="bg-secondary border-border text-foreground">
-                        <SelectValue placeholder="Bot auswählen" />
+                        <SelectValue placeholder={t('botControl.server.botPlaceholder')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">Kein Bot</SelectItem>
+                        <SelectItem value="none">{t('botControl.server.noBot')}</SelectItem>
                         {profiles.map((profile) => (
                           <SelectItem key={profile.id} value={profile.id}>
                             {profile.name}
@@ -375,7 +377,7 @@ export function ServerSection({
                     </Select>
                   </div>
                   <div className="flex items-center justify-between">
-                    <Label className="text-foreground">Benachrichtigungen</Label>
+                    <Label className="text-foreground">{t('botControl.server.notifications')}</Label>
                     <Switch
                       checked={Boolean(selectedConfig.settings.notifications_enabled)}
                       onCheckedChange={(v) => updateLocalGuildSetting('notifications_enabled', v)}
@@ -383,19 +385,19 @@ export function ServerSection({
                   </div>
                   <Button onClick={handleSaveGuildSettings} disabled={updateGuildSettings.isPending}>
                     {updateGuildSettings.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Server-Einstellungen speichern
+                    {t('botControl.server.saveSettings')}
                   </Button>
                 </CardContent>
               </Card>
 
               <div className="space-y-3">
-                <h2 className="text-lg font-semibold text-foreground">Tools für {selectedConfig.guild.name}</h2>
+                <h2 className="text-lg font-semibold text-foreground">{t('botControl.server.toolsFor', { name: selectedConfig.guild.name })}</h2>
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     value={toolSearch}
                     onChange={(e) => setToolSearch(e.target.value)}
-                    placeholder="Tools suchen (z.B. Test, Moderation, Debug)..."
+                    placeholder={t('botControl.server.toolsSearch')}
                     className="bg-secondary border-border pl-9 text-foreground"
                   />
                 </div>

@@ -320,7 +320,7 @@ async function handleMessageCreate({ userId, message }) {
       await message.react('🔄');
       const embed = new EmbedBuilder()
         .setColor(COLORS.embedInfo)
-        .setDescription('🔄 Dieses Feld wurde bereits aufgedeckt. Wähle ein anderes!');
+        .setDescription('🔄 This tile has already been revealed. Choose another one!');
       await message.channel.send({ embeds: [embed] });
     } catch { /* ignore */ }
     return;
@@ -328,14 +328,14 @@ async function handleMessageCreate({ userId, message }) {
 
   // Hit a mine?
   if (state.board[row][col]) {
-    const username = message.member?.displayName || message.author.username || 'Unbekannt';
+    const username = message.member?.displayName || message.author.username || 'Unknown';
     await message.react('💥');
 
     // Show the full board with the mine highlighted
     await sendBoardEmbed(message.channel, {
       title: 'BOOM!',
-      subtitle: `${username} hat eine Mine getroffen!`,
-      description: `💥 **BOOM!** ${escapeXml(username)} hat eine Mine auf **${content.toUpperCase()}** getroffen!\nAlle Minen werden aufgedeckt...`,
+      subtitle: `${username} hit a mine!`,
+      description: `💥 **BOOM!** ${escapeXml(username)} hit a mine on **${content.toUpperCase()}**!\nAll mines are being revealed...`,
       color: COLORS.embedBoom,
       board: state.board,
       revealed: state.revealed,
@@ -357,8 +357,8 @@ async function handleMessageCreate({ userId, message }) {
 
     await sendBoardEmbed(message.channel, {
       title: 'Minesweeper',
-      subtitle: 'Neues Spiel gestartet!',
-      description: '🔄 **Neues Spiel!**\nSchreibe eine Koordinate (z.B. `A1`) um weiterzuspielen.',
+      subtitle: 'New game started!',
+      description: '🔄 **New game!**\nType a coordinate (e.g. `A1`) to continue playing.',
       color: COLORS.embedNew,
       board: newBoard,
       revealed: newRevealed,
@@ -390,16 +390,16 @@ async function handleMessageCreate({ userId, message }) {
     await message.react('🏆');
 
     await sendBoardEmbed(message.channel, {
-      title: 'Gewonnen!',
-      subtitle: 'Alle sicheren Felder aufgedeckt!',
-      description: `🏆 **Gewonnen!** Alle sicheren Felder wurden aufgedeckt!\nSchreibe \`/set game minesweeper\` um ein neues Spiel zu starten.`,
+      title: 'Won!',
+      subtitle: 'All safe tiles revealed!',
+      description: `🏆 **Won!** All safe tiles have been revealed!\nType \`/set game minesweeper\` to start a new game.`,
       color: COLORS.embedWin,
       board: state.board,
       revealed: state.revealed,
       highlightCell: { row, col },
       safeCells: state.safeCells,
       totalSafe: state.totalSafe,
-      footer: '🎉 Herzlichen Glückwunsch!',
+      footer: '🎉 Congratulations!',
     });
 
     const newState = startNewGame();
@@ -414,15 +414,15 @@ async function handleMessageCreate({ userId, message }) {
 
   await sendBoardEmbed(message.channel, {
     title: 'Minesweeper',
-    subtitle: `${state.lastUsername} hat ${content.toUpperCase()} aufgedeckt`,
-    description: `🟢 **${escapeXml(state.lastUsername)}** hat **${content.toUpperCase()}** aufgedeckt — **${adj}** Mine(n) in der Nähe.`,
+    subtitle: `${state.lastUsername} revealed ${content.toUpperCase()}`,
+    description: `🟢 **${escapeXml(state.lastUsername)}** revealed **${content.toUpperCase()}** — **${adj}** mine(s) nearby.`,
     color: COLORS.embedSafe,
     board: state.board,
     revealed: state.revealed,
     highlightCell: { row, col },
     safeCells: state.safeCells,
     totalSafe: state.totalSafe,
-    footer: `Nächster Spieler ist dran!`,
+    footer: `Next player's turn!`,
   });
 }
 
@@ -450,8 +450,8 @@ async function setMinesweeperForGuild({ userId, guildId, channelId, channel }) {
   if (channel && typeof channel.send === 'function') {
     await sendBoardEmbed(channel, {
       title: 'Minesweeper',
-      subtitle: 'Neues Spiel gestartet!',
-      description: '💣 **Neues Spiel!**\nSchreibe eine Koordinate (z.B. `A1`, `C3`) um ein Feld aufzudecken.\nJeder Spieler darf nur einmal hintereinander!',
+      subtitle: 'New game started!',
+      description: '💣 **New game!**\nType a coordinate (e.g. `A1`, `C3`) to reveal a tile.\nEach player can only go once in a row!',
       color: COLORS.embedNew,
       board,
       revealed,

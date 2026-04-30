@@ -34,7 +34,7 @@ router.post('/deals/post/:guildId', requireAuth, requirePermission('write'), asy
   const guildId = String(req.params.guildId || '').trim();
 
   if (!guildId) {
-    return res.status(400).json({ error: 'Ungültige Server-ID.' });
+    return res.status(400).json({ error: 'Invalid server ID.' });
   }
 
   const client = getActiveClientForUser(userId);

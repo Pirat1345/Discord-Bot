@@ -115,7 +115,7 @@ router.get('/', requireAuth, requirePermission('read'), async (req, res) => {
   const current = db.settingsByUser[userId];
   if (current && !current.is_online && hasActiveBotForUser(userId)) {
     await stopBotForUser(userId);
-    appendLog(db, userId, 'info', 'Bot-Prozess war noch aktiv und wurde mit dem gespeicherten Offline-Status synchronisiert.');
+    appendLog(db, userId, 'info', 'Bot process was still active and has been synced with saved offline status.');
     await writeDb(db);
   }
 
@@ -125,18 +125,18 @@ router.get('/', requireAuth, requirePermission('read'), async (req, res) => {
     if (!effectiveBotToken) {
       current.is_online = false;
       current.updated_at = new Date().toISOString();
-      appendLog(db, userId, 'error', 'Bot wurde nach Neustart als offline markiert: Kein Bot-Token gesetzt.');
+      appendLog(db, userId, 'error', 'Bot marked as offline after restart: No bot token set.');
       await writeDb(db);
     } else {
       try {
         await startBotForUser(userId, effectiveBotToken);
-        appendLog(db, userId, 'info', 'Bot wurde nach Neustart automatisch neu verbunden.');
+        appendLog(db, userId, 'info', 'Bot automatically reconnected after restart.');
         await writeDb(db);
       } catch (error) {
         current.is_online = false;
         current.updated_at = new Date().toISOString();
-        const msg = error instanceof Error ? error.message : 'Unbekannter Fehler';
-        appendLog(db, userId, 'error', `Auto-Reconnect nach Neustart fehlgeschlagen: ${msg}`);
+        const msg = error instanceof Error ? error.message : 'Unknown error';
+        appendLog(db, userId, 'error', `Auto-reconnect after restart failed: ${msg}`);
         await writeDb(db);
       }
     }
@@ -206,10 +206,10 @@ router.patch('/', requireAuth, requirePermission('write'), async (req, res) => {
 
     if (!effectiveBotToken) {
       next.is_online = false;
-      appendLog(db, userId, 'error', 'Bot konnte nicht gestartet werden: Kein Bot-Token gesetzt.');
+      appendLog(db, userId, 'error', 'Bot could not be started: No bot token set.');
       db.settingsByUser[userId] = next;
       await writeDb(db);
-      return res.status(400).json({ error: 'Bot-Token fehlt. Bitte in den Einstellungen setzen.' });
+      return res.status(400).json({ error: 'Bot token missing. Please set it in settings.' });
     }
 
     try {
@@ -220,21 +220,21 @@ router.patch('/', requireAuth, requirePermission('write'), async (req, res) => {
         activity_text: next.bot_activity_text || '',
       });
       if (turningOn) {
-        appendLog(db, userId, 'success', 'Bot wurde gestartet.');
+        appendLog(db, userId, 'success', 'Bot started.');
       } else if (tokenChanged) {
-        appendLog(db, userId, 'info', 'Bot wurde mit neuem Token neu verbunden.');
+        appendLog(db, userId, 'info', 'Bot reconnected with new token.');
       }
     } catch (error) {
       next.is_online = false;
       db.settingsByUser[userId] = next;
-      const msg = error instanceof Error ? error.message : 'Unbekannter Fehler';
-      appendLog(db, userId, 'error', `Bot-Start fehlgeschlagen: ${msg}`);
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      appendLog(db, userId, 'error', `Bot start failed: ${msg}`);
       await writeDb(db);
-      return res.status(400).json({ error: `Bot konnte nicht gestartet werden: ${msg}` });
+      return res.status(400).json({ error: `Bot could not be started: ${msg}` });
     }
   } else if (turningOff) {
     await stopBotForUser(userId);
-    appendLog(db, userId, 'warn', 'Bot wurde gestoppt.');
+    appendLog(db, userId, 'warn', 'Bot stopped.');
   } else if (next.is_online && hasActiveBot) {
     // Bot is already running with same token — just update presence
     try {
@@ -260,7 +260,7 @@ router.patch('/branding', requireAuth, requirePermission('admin'), async (req, r
   if (appName !== undefined) {
     const normalizedName = String(appName).trim();
     if (!normalizedName) {
-      return res.status(400).json({ error: 'App-Name darf nicht leer sein.' });
+      return res.status(400).json({ error: 'App name must not be empty.' });
     }
     next.app_name = normalizedName;
   }
@@ -268,13 +268,13 @@ router.patch('/branding', requireAuth, requirePermission('admin'), async (req, r
   if (iconDataUrl !== undefined) {
     const normalizedIcon = String(iconDataUrl || '').trim();
     if (normalizedIcon.length > 1_500_000) {
-      return res.status(400).json({ error: 'App-Icon ist zu groß. Bitte nutze ein Bild unter 1 MB.' });
+      return res.status(400).json({ error: 'App icon is too large. Please use an image under 1 MB.' });
     }
 
     if (normalizedIcon) {
       const iconFile = await writeBrandingIcon(normalizedIcon);
       if (!iconFile) {
-        return res.status(400).json({ error: 'App-Icon muss ein Bild im Data-URL-Format sein.' });
+        return res.status(400).json({ error: 'App icon must be an image in data URL format.' });
       }
       next.app_icon_file = iconFile;
     } else {

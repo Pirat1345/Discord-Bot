@@ -1,4 +1,5 @@
 import { useBotSettings, useUpdateSettings } from '@/hooks/useBotData';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +31,7 @@ import { createAvatarDataUrl } from '@/lib/avatar';
 import type { LocalUser } from '@/types/api';
 
 export default function Settings() {
+  const { t } = useTranslation();
   const { user, updateAccount, signOut } = useAuth();
   const { data: settings, isLoading } = useBotSettings();
   const updateSettings = useUpdateSettings();
@@ -95,8 +97,8 @@ export default function Settings() {
       })
       .catch((error) => {
         if (!mounted) return;
-        const msg = error instanceof Error ? error.message : 'Konten konnten nicht geladen werden.';
-        toast({ title: 'Fehler', description: msg, variant: 'destructive' });
+        const msg = error instanceof Error ? error.message : t('common.accountsLoadError');
+        toast({ title: t('common.error'), description: msg, variant: 'destructive' });
       })
       .finally(() => {
         if (mounted) setLoadingAccounts(false);
@@ -118,18 +120,18 @@ export default function Settings() {
   const handleSaveGeneral = async () => {
     try {
       await updateSettings.mutateAsync({ notifications_enabled: notifications });
-      toast({ title: 'Gespeichert' });
+      toast({ title: t('common.success') });
     } catch {
-      toast({ title: 'Fehler', variant: 'destructive' });
+      toast({ title: t('common.error'), variant: 'destructive' });
     }
   };
 
   const handleSaveBot = async () => {
     try {
       await updateSettings.mutateAsync({ bot_token: botToken, command_prefix: prefix });
-      toast({ title: 'Gespeichert', description: 'Bot-Einstellungen wurden aktualisiert.' });
+      toast({ title: t('common.success'), description: t('settingsDiscord.botSaved') });
     } catch {
-      toast({ title: 'Fehler', variant: 'destructive' });
+      toast({ title: t('common.error'), variant: 'destructive' });
     }
   };
 
@@ -137,7 +139,7 @@ export default function Settings() {
     if (!user) return;
 
     if (!accountUsername.trim() || accountUsername.trim() === user.username) {
-      toast({ title: 'Keine Änderungen' });
+      toast({ title: t('settingsProfile.noChanges') });
       return;
     }
 
@@ -145,23 +147,23 @@ export default function Settings() {
     const { error } = await updateAccount({ username: accountUsername.trim() });
 
     if (error) {
-      toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+      toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
       setSavingUsername(false);
       return;
     }
 
-    toast({ title: 'Gespeichert', description: 'Benutzername wurde aktualisiert.' });
+    toast({ title: t('settingsProfile.saved'), description: t('settingsProfile.profileUpdated') });
     setSavingUsername(false);
   };
 
   const handleChangePassword = async () => {
     if (newPassword !== confirmNewPassword) {
-      toast({ title: 'Fehler', description: 'Die neuen Passwörter stimmen nicht überein.', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('settingsProfile.passwordDialog.mismatch'), variant: 'destructive' });
       return;
     }
 
     if (!currentPassword || !newPassword) {
-      toast({ title: 'Fehler', description: 'Bitte alle Passwortfelder ausfüllen.', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('settingsProfile.passwordDialog.allRequired'), variant: 'destructive' });
       return;
     }
 
@@ -172,7 +174,7 @@ export default function Settings() {
     });
 
     if (error) {
-      toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+      toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
       setSavingPassword(false);
       return;
     }
@@ -181,23 +183,23 @@ export default function Settings() {
     setNewPassword('');
     setConfirmNewPassword('');
     setChangePasswordOpen(false);
-    toast({ title: 'Passwort erneuert', description: 'Dein Passwort wurde erfolgreich geändert.' });
+    toast({ title: t('settingsProfile.passwordDialog.changed'), description: t('settingsProfile.passwordDialog.changedDescription') });
     setSavingPassword(false);
   };
 
   const handleCreateAccount = async () => {
     if (!newAccountUsername.trim()) {
-      toast({ title: 'Fehler', description: 'Bitte Benutzernamen eingeben.', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('settingsUsers.createDialog.usernameRequired'), variant: 'destructive' });
       return;
     }
 
     if (newAccountPassword.length < 5) {
-      toast({ title: 'Fehler', description: 'Passwort muss mindestens 5 Zeichen haben.', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('settingsUsers.createDialog.passwordMin'), variant: 'destructive' });
       return;
     }
 
     if (newAccountPassword !== newAccountPasswordConfirm) {
-      toast({ title: 'Fehler', description: 'Die Passwörter stimmen nicht überein.', variant: 'destructive' });
+      toast({ title: t('common.error'), description: t('settingsUsers.createDialog.passwordMismatch'), variant: 'destructive' });
       return;
     }
 
@@ -219,10 +221,10 @@ export default function Settings() {
       setNewAccountPasswordConfirm('');
       setNewAccountRole('read');
       setCreateAccountOpen(false);
-      toast({ title: 'Account erstellt', description: `Benutzer ${created.user.username} wurde angelegt.` });
+      toast({ title: t('settingsUsers.createDialog.created'), description: t('settingsUsers.createDialog.createdDescription', { username: created.user.username }) });
     } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Unbekannter Fehler';
-      toast({ title: 'Fehler', description: msg, variant: 'destructive' });
+      const msg = error instanceof Error ? error.message : t('common.unknownError');
+      toast({ title: t('common.error'), description: msg, variant: 'destructive' });
     } finally {
       setCreatingAccount(false);
     }
@@ -230,21 +232,21 @@ export default function Settings() {
 
   const handleDeleteManagedAccount = async (account: LocalUser) => {
     if (account.role === 'admin') {
-      toast({ title: 'Nicht erlaubt', description: 'Admin-Accounts dürfen nicht gelöscht werden.', variant: 'destructive' });
+      toast({ title: t('settingsUsers.deleteNotAllowed'), description: t('settingsUsers.deleteNotAllowed'), variant: 'destructive' });
       return;
     }
 
-    const confirmed = window.confirm(`Account ${account.username} wirklich löschen?`);
+    const confirmed = window.confirm(t('settingsUsers.deleteConfirm', { username: account.username }));
     if (!confirmed) return;
 
     setDeletingAccountId(account.id);
     try {
       await apiFetch<void>(`/account/users/${account.id}`, { method: 'DELETE' });
       setAccounts((prev) => prev.filter((entry) => entry.id !== account.id));
-      toast({ title: 'Account gelöscht', description: `Benutzer ${account.username} wurde entfernt.` });
+      toast({ title: t('settingsUsers.accountDeleted'), description: t('settingsUsers.accountDeletedDescription', { username: account.username }) });
     } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Unbekannter Fehler';
-      toast({ title: 'Fehler', description: msg, variant: 'destructive' });
+      const msg = error instanceof Error ? error.message : t('common.unknownError');
+      toast({ title: t('common.error'), description: msg, variant: 'destructive' });
     } finally {
       setDeletingAccountId(null);
     }
@@ -254,21 +256,21 @@ export default function Settings() {
     if (!user) return;
 
     if (user.role === 'admin') {
-      toast({ title: 'Nicht erlaubt', description: 'Admin-Accounts dürfen nicht gelöscht werden.', variant: 'destructive' });
+      toast({ title: t('settingsProfile.deleteNotAllowed'), description: t('settingsProfile.deleteNotAllowed'), variant: 'destructive' });
       return;
     }
 
-    const confirmed = window.confirm('Deinen eigenen Account wirklich löschen? Dieser Schritt kann nicht rückgängig gemacht werden.');
+    const confirmed = window.confirm(t('settingsProfile.deleteConfirm'));
     if (!confirmed) return;
 
     setDeletingSelf(true);
     try {
       await apiFetch<void>('/account/self', { method: 'DELETE' });
       await signOut();
-      toast({ title: 'Account gelöscht', description: 'Dein Account wurde gelöscht.' });
+      toast({ title: t('settingsUsers.accountDeleted'), description: t('settingsProfile.accountDeleted') });
     } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Unbekannter Fehler';
-      toast({ title: 'Fehler', description: msg, variant: 'destructive' });
+      const msg = error instanceof Error ? error.message : t('common.unknownError');
+      toast({ title: t('common.error'), description: msg, variant: 'destructive' });
     } finally {
       setDeletingSelf(false);
     }
@@ -277,8 +279,8 @@ export default function Settings() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold text-foreground">Einstellungen</h1>
-        <p className="text-sm text-muted-foreground">Verwalte dein Profil, Benutzer und die Bot-Konfiguration an einem Ort.</p>
+        <h1 className="text-2xl font-bold text-foreground">{t('settings.title')}</h1>
+        <p className="text-sm text-muted-foreground">{t('settings.description')}</p>
       </div>
 
       <Card className="border-border bg-card">
@@ -288,39 +290,37 @@ export default function Settings() {
             <AvatarFallback className="bg-secondary text-base font-semibold text-foreground">{avatarFallback}</AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
-            <CardTitle className="truncate text-foreground">Mein Profil</CardTitle>
+            <CardTitle className="truncate text-foreground">{t('settingsProfile.title')}</CardTitle>
             <CardDescription className="text-muted-foreground">
-              {user?.username ?? 'User'} · {user?.role === 'admin' ? 'Administrator' : 'Benutzer'}
+              {user?.username ?? 'User'} · {user?.role === 'admin' ? t('settingsProfile.roleAdmin') : t('settingsProfile.roleUser')}
             </CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label className="text-foreground">Benutzername</Label>
-              <Input
-                value={accountUsername}
+              <Label className="text-foreground">{t('settingsProfile.loginName')}</Label>
                 onChange={(e) => setAccountUsername(e.target.value)}
                 className="bg-secondary border-border text-foreground"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-foreground">Account ID</Label>
+              <Label className="text-foreground">{t('settingsProfile.accountId')}</Label>
               <Input value={user?.id || ''} disabled className="bg-secondary border-border text-muted-foreground font-mono text-xs" />
             </div>
             <div className="space-y-2">
-              <Label className="text-foreground">Rolle</Label>
+              <Label className="text-foreground">{t('settingsProfile.role')}</Label>
               <Input value={user?.role || ''} disabled className="bg-secondary border-border text-muted-foreground" />
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
             <Button onClick={handleSaveUsername} disabled={savingUsername}>
               {savingUsername && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Benutzernamen speichern
+              {t('settingsProfile.saveProfile')}
             </Button>
             <Button onClick={() => setChangePasswordOpen(true)} variant="secondary" className="gap-2">
               <KeyRound className="h-4 w-4" />
-              Passwort ändern
+              {t('settingsProfile.changePassword')}
             </Button>
             {user?.role !== 'admin' && (
               <Button
@@ -330,7 +330,7 @@ export default function Settings() {
                 disabled={deletingSelf}
               >
                 {deletingSelf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                Eigenen Account löschen
+                {t('settingsProfile.deleteOwnAccount')}
               </Button>
             )}
           </div>
@@ -340,16 +340,16 @@ export default function Settings() {
       {user?.role === 'admin' && (
         <Card className="border-border bg-card">
           <CardHeader>
-            <CardTitle className="text-foreground">Benutzerverwaltung</CardTitle>
-            <CardDescription className="text-muted-foreground">Verwalte vorhandene Accounts und lege neue Benutzer an.</CardDescription>
+            <CardTitle className="text-foreground">{t('settingsUsers.title')}</CardTitle>
+            <CardDescription className="text-muted-foreground">{t('settingsUsers.description')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Button onClick={() => setCreateAccountOpen(true)} className="gap-2 self-start">
               <UserPlus className="h-4 w-4" />
-              Weiteren Account anlegen
+              {t('settingsUsers.addAccount')}
             </Button>
             <div className="space-y-2 border-t border-border pt-4">
-              <Label className="text-foreground">Vorhandene Accounts</Label>
+              <Label className="text-foreground">{t('settingsUsers.existingAccounts')}</Label>
               {loadingAccounts ? (
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               ) : (
@@ -375,7 +375,7 @@ export default function Settings() {
                             ) : (
                               <Trash2 className="h-3.5 w-3.5" />
                             )}
-                            Löschen
+                            {t('settingsUsers.deleteAccount')}
                           </Button>
                         )}
                       </div>
@@ -392,54 +392,54 @@ export default function Settings() {
         <CardHeader className="space-y-2">
           <div className="flex items-center gap-2">
             <Settings2 className="h-5 w-5 text-primary" />
-            <CardTitle className="text-foreground">Konfigurieren</CardTitle>
+            <CardTitle className="text-foreground">{t('settings.cards.configuration.title')}</CardTitle>
           </div>
-          <CardDescription className="text-muted-foreground">Hier findest du die allgemeinen und Discord-spezifischen Einstellungen.</CardDescription>
+          <CardDescription className="text-muted-foreground">{t('settings.cards.configuration.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="general" className="w-full">
             <TabsList className="bg-secondary border border-border">
               <TabsTrigger value="general" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Globe className="h-4 w-4" />
-                Allgemein
+                {t('settingsGeneral.title')}
               </TabsTrigger>
               <TabsTrigger value="discord" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Bot className="h-4 w-4" />
-                Discord
+                {t('settingsDiscord.title')}
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="general" className="mt-4 space-y-4">
               <div className="flex items-center justify-between rounded-md border border-border bg-secondary p-4">
                 <div>
-                  <Label className="text-foreground">Benachrichtigungen</Label>
-                  <p className="text-sm text-muted-foreground">Desktop-Benachrichtigungen aktivieren</p>
+                  <Label className="text-foreground">{t('settingsGeneral.notifications')}</Label>
+                  <p className="text-sm text-muted-foreground">{t('settingsGeneral.notificationsDescription')}</p>
                 </div>
                 <Switch checked={notifications} onCheckedChange={setNotifications} />
               </div>
               <Button onClick={handleSaveGeneral} disabled={updateSettings.isPending}>
                 {updateSettings.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Speichern
+                {t('common.save')}
               </Button>
             </TabsContent>
 
             <TabsContent value="discord" className="mt-4 space-y-4">
               <div className="space-y-4 rounded-md border border-border bg-secondary p-4">
                 <div className="space-y-2">
-                  <Label className="text-foreground">Bot Token</Label>
+                  <Label className="text-foreground">{t('settingsDiscord.botToken')}</Label>
                   <Input
                     type="password"
-                    placeholder="Dein Discord Bot Token"
+                    placeholder={t('settingsDiscord.botTokenPlaceholder')}
                     value={botToken}
                     onChange={(e) => setBotToken(e.target.value)}
                     className="bg-card border-border text-foreground placeholder:text-muted-foreground"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Finde deinen Token im Discord Developer Portal unter Bot → Token
+                    {t('settingsDiscord.botTokenHint')}
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-foreground">Command Prefix</Label>
+                  <Label className="text-foreground">{t('settingsDiscord.commandPrefix')}</Label>
                   <Input
                     value={prefix}
                     onChange={(e) => setPrefix(e.target.value)}
@@ -448,7 +448,7 @@ export default function Settings() {
                 </div>
                 <Button onClick={handleSaveBot} disabled={updateSettings.isPending}>
                   {updateSettings.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Speichern
+                  {t('common.save')}
                 </Button>
               </div>
             </TabsContent>
@@ -459,14 +459,14 @@ export default function Settings() {
       <Dialog open={changePasswordOpen} onOpenChange={setChangePasswordOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Passwort ändern</DialogTitle>
+            <DialogTitle>{t('settingsProfile.passwordDialog.title')}</DialogTitle>
             <DialogDescription>
-              Gib dein altes Passwort und anschließend zweimal dein neues Passwort ein.
+              {t('settingsProfile.passwordDialog.description')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-2">
-              <Label>Altes Passwort</Label>
+              <Label>{t('settingsProfile.passwordDialog.oldPassword')}</Label>
               <Input
                 type="password"
                 value={currentPassword}
@@ -474,16 +474,12 @@ export default function Settings() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Neues Passwort</Label>
-              <Input
-                type="password"
-                minLength={5}
-                value={newPassword}
+              <Label>{t('settingsProfile.passwordDialog.newPassword')}</Label>
                 onChange={(e) => setNewPassword(e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label>Neues Passwort wiederholen</Label>
+              <Label>{t('settingsProfile.passwordDialog.confirmPassword')}</Label>
               <Input
                 type="password"
                 minLength={5}
@@ -495,7 +491,7 @@ export default function Settings() {
           <DialogFooter>
             <Button onClick={handleChangePassword} disabled={savingPassword}>
               {savingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Speichern
+              {t('settingsProfile.passwordDialog.save')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -504,30 +500,26 @@ export default function Settings() {
       <Dialog open={createAccountOpen} onOpenChange={setCreateAccountOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Neuen Account anlegen</DialogTitle>
+            <DialogTitle>{t('settingsUsers.createDialog.title')}</DialogTitle>
             <DialogDescription>
-              Erstelle einen weiteren Benutzer und weise ihm eine Rolle zu.
+              {t('settingsUsers.createDialog.description')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-2">
-              <Label>Benutzername</Label>
+              <Label>{t('settingsUsers.createDialog.username')}</Label>
               <Input
                 value={newAccountUsername}
                 onChange={(e) => setNewAccountUsername(e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label>Passwort</Label>
-              <Input
-                type="password"
-                minLength={5}
-                value={newAccountPassword}
+              <Label>{t('settingsUsers.createDialog.password')}</Label>
                 onChange={(e) => setNewAccountPassword(e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label>Passwort wiederholen</Label>
+              <Label>{t('settingsUsers.createDialog.confirmPassword')}</Label>
               <Input
                 type="password"
                 minLength={5}
@@ -536,10 +528,10 @@ export default function Settings() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Rolle</Label>
+              <Label>{t('settingsUsers.createDialog.role')}</Label>
               <Select value={newAccountRole} onValueChange={setNewAccountRole}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Rolle auswählen" />
+                  <SelectValue placeholder={t('settingsUsers.createDialog.rolePlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="read">read</SelectItem>
@@ -553,7 +545,7 @@ export default function Settings() {
           <DialogFooter>
             <Button onClick={handleCreateAccount} disabled={creatingAccount}>
               {creatingAccount && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Account erstellen
+              {t('settingsUsers.createDialog.create')}
             </Button>
           </DialogFooter>
         </DialogContent>

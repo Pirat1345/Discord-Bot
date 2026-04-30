@@ -12,27 +12,27 @@ const FULL_INTENTS = [...BASE_INTENTS, ...PRIVILEGED_INTENTS];
 
 const SET_GAME_COUNTING_COMMAND = {
   name: 'set',
-  description: 'Setzt Bot-Funktionen fuer den aktuellen Channel.',
+  description: 'Sets bot features for the current channel.',
   options: [
     {
       type: ApplicationCommandOptionType.SubcommandGroup,
       name: 'game',
-      description: 'Spiel-Funktionen',
+      description: 'Game features',
       options: [
         {
           type: ApplicationCommandOptionType.Subcommand,
           name: 'counting',
-          description: 'Aktiviert Counting in diesem Channel.',
+          description: 'Enables counting in this channel.',
         },
         {
           type: ApplicationCommandOptionType.Subcommand,
           name: 'counting-clear',
-          description: 'Löscht Counting vollständig in diesem Server.',
+          description: 'Deletes counting completely on this server.',
         },
         {
           type: ApplicationCommandOptionType.Subcommand,
           name: 'minesweeper',
-          description: 'Startet ein neues Minesweeper-Spiel in diesem Channel.',
+          description: 'Starts a new Minesweeper game in this channel.',
         },
       ],
     },
@@ -41,12 +41,12 @@ const SET_GAME_COUNTING_COMMAND = {
 
 const RESET_COMMAND = {
   name: 'reset',
-  description: 'Setzt Bot-Funktionen zurück.',
+  description: 'Resets bot features.',
   options: [
     {
       type: ApplicationCommandOptionType.Subcommand,
       name: 'minesweeper',
-      description: 'Setzt Minesweeper vollständig zurück (Spiel, Channel, alles).',
+      description: 'Resets Minesweeper completely (game, channel, everything).',
     },
   ],
 };
@@ -58,12 +58,12 @@ const MC_COMMAND = {
     {
       type: ApplicationCommandOptionType.Subcommand,
       name: 'scan',
-      description: 'Pingt einen Minecraft Server und zeigt den Status an.',
+      description: 'Pings a Minecraft server and shows the status.',
       options: [
         {
           type: ApplicationCommandOptionType.String,
           name: 'ip',
-          description: 'Server-Adresse (z.B. mc.hypixel.net oder 192.168.1.100:25565)',
+          description: 'Server address (e.g. mc.hypixel.net or 192.168.1.100:25565)',
           required: true,
         },
         {
@@ -128,8 +128,8 @@ function createConfiguredClient(userId, intents) {
     try {
       await handleMessageCreate({ userId, message });
     } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Unbekannter Fehler';
-      console.error(`[dc-funktions] messageCreate Fehler fuer User ${userId}: ${msg}`);
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`[dc-funktions] messageCreate error for user ${userId}: ${msg}`);
     }
   });
 
@@ -137,8 +137,8 @@ function createConfiguredClient(userId, intents) {
     try {
       await handleInteractionCreate({ userId, interaction });
     } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Unbekannter Fehler';
-      console.error(`[dc-funktions] interactionCreate Fehler fuer User ${userId}: ${msg}`);
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`[dc-funktions] interactionCreate error for user ${userId}: ${msg}`);
     }
   });
 
@@ -151,8 +151,8 @@ function createConfiguredClient(userId, intents) {
     try {
       await handleGuildMemberAdd({ userId, member });
     } catch (error) {
-      const msg = error instanceof Error ? error.message : 'Unbekannter Fehler';
-      console.error(`[dc-funktions] guildMemberAdd Fehler fuer User ${userId}: ${msg}`);
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`[dc-funktions] guildMemberAdd error for user ${userId}: ${msg}`);
     }
   });
 
